@@ -249,10 +249,10 @@
     }
 
     .grade-cell {
-      width: 170px;
+      width: 130px;
     }
 
-    .grade-select,
+    .grade-input,
     .subject-select {
       width: 100%;
       border: 1px solid #d1d5db;
@@ -263,10 +263,33 @@
       outline: none;
     }
 
-    .grade-select:focus,
+    .grade-input {
+      max-width: 88px;
+      text-align: center;
+      text-transform: uppercase;
+      font-weight: 750;
+      letter-spacing: 0.08em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .grade-input::placeholder {
+      color: #9ca3af;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .grade-input:focus,
     .subject-select:focus {
       border-color: #6b7280;
       box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+    }
+
+    .grade-input.invalid {
+      border-color: #dc2626;
+      background: #fff7f7;
+      color: #b42318;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.10);
     }
 
     .audit-row td {
@@ -497,7 +520,9 @@
     <div id="semester-container"></div>
 
     <section class="note">
-      <strong>Calculation:</strong>
+      <strong>Grade entry:</strong>
+      Type any valid two-letter grade. Lowercase is converted to uppercase automatically. Invalid grades are highlighted in red and ignored by calculations. A valid grade automatically moves to the next subject.
+      <br><strong>Calculation:</strong>
       SGPA = Σ(Credit × Grade Point) ÷ Σ(Credits). CGPA is calculated cumulatively in semester order using the same credit-weighted method. If any subject has an
       <strong>FF</strong> grade, that semester is marked failed and its SGPA is not displayed.
       The Semester 2 audit course is excluded from SGPA/CGPA.
@@ -588,15 +613,6 @@
 
     const semesterContainer = document.getElementById("semester-container");
 
-    function gradeOptions() {
-      return `
-        <option value="">Select grade</option>
-        ${Object.entries(GRADE_POINTS)
-          .map(([grade, point]) => `<option value="${grade}">${grade} — ${point}</option>`)
-          .join("")}
-      `;
-    }
-
     function renderSemester(semester) {
       const section = document.createElement("section");
       section.className = `semester ${semester.id === 1 ? "active" : ""}`;
@@ -639,13 +655,21 @@
             <td>${nameCell}</td>
             <td class="credits">${subject.credits}</td>
             <td class="grade-cell">
-              <select
-                class="grade-select"
+              <input
+                class="grade-input"
+                type="text"
+                maxlength="2"
+                inputmode="text"
+                autocomplete="off"
+                autocapitalize="characters"
+                enterkeyhint="next"
+                spellcheck="false"
+                pattern="(?:EX|AA|AB|BB|BC|CC|CD|DD|DE|EE|FF)"
+                placeholder="Grade"
                 data-semester="${semester.id}"
                 data-index="${index}"
-                aria-label="${subject.name || "Multidisciplinary Course"} grade">
-                ${gradeOptions()}
-              </select>
+                aria-label="${subject.name || "Multidisciplinary Course"} grade"
+                aria-invalid="false">
             </td>
           </tr>
         `;
@@ -735,6 +759,138 @@
         .join("");
 
 
+    const VALID_GRADES = Object.freeze(Object.keys(GRADE_POINTS));
+    const VALID_GRADE_SET = new Set(VALID_GRADES);
+    const VALID_GRADE_PREFIXES = new Set(VALID_GRADES.map(grade => grade.charAt(0)));
+
+    function normalizeGradeValue(value) {
+      return String(value || "")
+        .toUpperCase()
+        .replace(/[^A-Z]/g, "")
+        .slice(0, 2);
+    }
+
+    function isValidGrade(value) {
+      return VALID_GRADE_SET.has(value);
+    }
+
+    function setGradeInvalid(input, invalid) {
+      input.classList.toggle("invalid", invalid);
+      input.setAttribute("aria-invalid", invalid ? "true" : "false");
+
+      if (invalid) {
+        input.title = `Invalid grade. Use: ${VALID_GRADES.join(", ")}`;
+      } else {
+        input.removeAttribute("title");
+      }
+    }
+
+    function validateGradeInput(input, moveNext = false) {
+      const value = normalizeGradeValue(input.value);
+      if (input.value !== value) input.value = value;
+
+      const valid = isValidGrade(value);
+      const invalid = value.length === 2 && !valid;
+      setGradeInvalid(input, invalid);
+
+      if (valid && moveNext) {
+        const sameSemesterInputs = [...document.querySelectorAll(
+          `.grade-input[data-semester="${input.dataset.semester}"]`
+        )];
+        const currentIndex = sameSemesterInputs.indexOf(input);
+        const nextInput = sameSemesterInputs[currentIndex + 1];
+
+        if (nextInput) {
+          window.setTimeout(() => {
+            nextInput.focus();
+            nextInput.select();
+          }, 0);
+        }
+      }
+
+      return { value, valid, invalid };
+    }
+
+    function setupGradeInputs() {
+      const inputs = [...document.querySelectorAll(".grade-input")];
+
+      inputs.forEach(input => {
+        input.addEventListener("focus", () => {
+          window.setTimeout(() => input.select(), 0);
+        });
+
+        input.addEventListener("beforeinput", event => {
+          if (
+            event.inputType === "insertText" &&
+            event.data &&
+            /[^a-zA-Z]/.test(event.data)
+          ) {
+            event.preventDefault();
+            setGradeInvalid(input, true);
+            window.setTimeout(() => {
+              if (normalizeGradeValue(input.value).length < 2) {
+                setGradeInvalid(input, false);
+              }
+            }, 220);
+          }
+        });
+
+        input.addEventListener("paste", event => {
+          event.preventDefault();
+          const raw = (event.clipboardData || window.clipboardData)
+            .getData("text")
+            .trim()
+            .toUpperCase();
+
+          if (!/^[A-Z]{1,2}$/.test(raw)) {
+            setGradeInvalid(input, true);
+            window.setTimeout(() => validateGradeInput(input, false), 300);
+            return;
+          }
+
+          input.value = raw;
+          const result = validateGradeInput(input, false);
+          updateAll();
+
+          if (result.valid) {
+            validateGradeInput(input, true);
+          }
+        });
+
+        input.addEventListener("input", () => {
+          const result = validateGradeInput(input, false);
+
+          // A first letter that cannot begin any valid grade is rejected immediately.
+          if (result.value.length === 1 && !VALID_GRADE_PREFIXES.has(result.value)) {
+            input.value = "";
+            setGradeInvalid(input, true);
+            updateAll();
+            window.setTimeout(() => setGradeInvalid(input, false), 260);
+            return;
+          }
+
+          updateAll();
+
+          // Only complete valid grades auto-advance.
+          if (result.valid) {
+            validateGradeInput(input, true);
+          }
+        });
+
+        input.addEventListener("blur", () => {
+          validateGradeInput(input, false);
+          updateAll();
+        });
+
+        input.addEventListener("keydown", event => {
+          if (event.key === "Enter" && isValidGrade(normalizeGradeValue(input.value))) {
+            event.preventDefault();
+            validateGradeInput(input, true);
+          }
+        });
+      });
+    }
+
     // ---------------------------------------------------------------------
     // Shareable state
     // ---------------------------------------------------------------------
@@ -777,10 +933,11 @@
     }
 
     function collectShareStateBytes() {
-      const gradeSelects = [...document.querySelectorAll(".grade-select")];
+      const gradeInputs = [...document.querySelectorAll(".grade-input")];
 
-      const gradeCodes = gradeSelects.map(select => {
-        const index = GRADE_ORDER.indexOf(select.value);
+      const gradeCodes = gradeInputs.map(input => {
+        const value = normalizeGradeValue(input.value);
+        const index = isValidGrade(value) ? GRADE_ORDER.indexOf(value) : 0;
         return index >= 0 ? index : 0;
       });
 
@@ -848,14 +1005,15 @@
     function applyShareState(state) {
       if (!state) return false;
 
-      const gradeSelects = [...document.querySelectorAll(".grade-select")];
+      const gradeInputs = [...document.querySelectorAll(".grade-input")];
 
-      if (state.gradeCodes.length !== gradeSelects.length) {
+      if (state.gradeCodes.length !== gradeInputs.length) {
         return false;
       }
 
-      gradeSelects.forEach((select, index) => {
-        select.value = GRADE_ORDER[state.gradeCodes[index]] || "";
+      gradeInputs.forEach((input, index) => {
+        input.value = GRADE_ORDER[state.gradeCodes[index]] || "";
+        validateGradeInput(input, false);
       });
 
       const mdmSelects = [...document.querySelectorAll(".mdm-select")];
@@ -946,20 +1104,23 @@
     });
 
     function semesterState(semester) {
-      const selects = [...document.querySelectorAll(
-        `.grade-select[data-semester="${semester.id}"]`
+      const inputs = [...document.querySelectorAll(
+        `.grade-input[data-semester="${semester.id}"]`
       )];
 
-      const entered = selects.filter(s => s.value !== "").length;
-      const complete = entered === selects.length;
-      const hasFail = complete && selects.some(s => s.value === "FF");
+      const values = inputs.map(input => normalizeGradeValue(input.value));
+      const validCount = values.filter(value => isValidGrade(value)).length;
+      const hasInvalid = values.some(value => value.length > 0 && !isValidGrade(value));
+      const complete = validCount === inputs.length && !hasInvalid;
+      const hasFail = complete && values.some(value => value === "FF");
 
       if (!complete) {
         return {
           complete: false,
           hasFail: false,
-          entered,
-          total: selects.length,
+          hasInvalid,
+          entered: validCount,
+          total: inputs.length,
           sgpa: null,
           gradePoints: null
         };
@@ -968,10 +1129,11 @@
       let weightedPoints = 0;
       let totalCredits = 0;
 
-      selects.forEach(select => {
-        const index = Number(select.dataset.index);
+      inputs.forEach(input => {
+        const index = Number(input.dataset.index);
         const subject = semester.subjects[index];
-        const gradePoint = GRADE_POINTS[select.value];
+        const grade = normalizeGradeValue(input.value);
+        const gradePoint = GRADE_POINTS[grade];
 
         weightedPoints += subject.credits * gradePoint;
         totalCredits += subject.credits;
@@ -980,8 +1142,9 @@
       return {
         complete: true,
         hasFail,
-        entered,
-        total: selects.length,
+        hasInvalid: false,
+        entered: validCount,
+        total: inputs.length,
         sgpa: hasFail ? null : weightedPoints / totalCredits,
         gradePoints: weightedPoints
       };
@@ -1029,15 +1192,15 @@
         const overallGp = document.getElementById(`overall-gp-s${semester.id}`);
         const overallCgpa = document.getElementById(`metric-cgpa-s${semester.id}`);
 
-        progress.textContent = `${state.entered} of ${state.total} grades entered`;
+        progress.textContent = `${state.entered} of ${state.total} valid grades entered`;
 
         if (!state.complete) {
           summaryValue.textContent = "—";
-          summaryStatus.textContent = "Enter all grades";
-          summaryStatus.classList.remove("error");
+          summaryStatus.textContent = state.hasInvalid ? "Correct invalid grade" : "Enter all grades";
+          summaryStatus.classList.toggle("error", state.hasInvalid);
 
-          result.textContent = "SGPA: —";
-          result.classList.remove("error");
+          result.textContent = state.hasInvalid ? "SGPA: — (invalid grade)" : "SGPA: —";
+          result.classList.toggle("error", state.hasInvalid);
 
           semesterGp.textContent = "—";
           semesterSgpa.textContent = "—";
@@ -1111,17 +1274,16 @@
         `${lastCumulative.credits} credits · ${lastCumulative.gradePoints.toFixed(2)} grade points`;
     }
 
-    document.querySelectorAll(".grade-select").forEach(select => {
-      select.addEventListener("change", updateAll);
-    });
-
     document.querySelectorAll("[data-reset]").forEach(button => {
       button.addEventListener("click", () => {
         const semesterId = button.dataset.reset;
 
         document
-          .querySelectorAll(`.grade-select[data-semester="${semesterId}"]`)
-          .forEach(select => select.value = "");
+          .querySelectorAll(`.grade-input[data-semester="${semesterId}"]`)
+          .forEach(input => {
+            input.value = "";
+            setGradeInvalid(input, false);
+          });
 
         updateAll();
       });
@@ -1147,6 +1309,8 @@
         shareStatus.textContent = "";
       }, 2500);
     });
+
+    setupGradeInputs();
 
     const sharedState = getSharedStateFromUrl();
 
