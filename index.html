@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>B.Tech. CSE SGPA & CGPA Calculator</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --text: #17191c;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --soft: #f3f4f6;
+      --accent: #111827;
+      --danger: #b42318;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                   "Segoe UI", Roboto, Arial, sans-serif;
+      line-height: 1.45;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 36px auto 56px;
+    }
+
+    .header {
+      margin-bottom: 22px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: clamp(25px, 4vw, 38px);
+      line-height: 1.1;
+      letter-spacing: -0.035em;
+      font-weight: 750;
+    }
+
+    .header p {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      min-height: 104px;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .summary-value {
+      margin-top: 7px;
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 760;
+      letter-spacing: -0.04em;
+    }
+
+    .summary-status {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      min-height: 18px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .share-btn {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      border-radius: 10px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-weight: 680;
+    }
+
+    .share-btn:hover {
+      opacity: 0.92;
+    }
+
+    .share-btn:active {
+      transform: translateY(1px);
+    }
+
+    .share-status {
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-weight: 650;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .semester {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .semester.active {
+      display: block;
+    }
+
+    .semester-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .semester-title {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 740;
+      letter-spacing: -0.02em;
+    }
+
+    .semester-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .reset-btn {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 11px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .reset-btn:hover {
+      background: var(--soft);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #fafafa;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #374151;
+      white-space: nowrap;
+    }
+
+    .subject {
+      font-weight: 610;
+    }
+
+    .credits {
+      width: 86px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .grade-cell {
+      width: 170px;
+    }
+
+    .grade-select,
+    .subject-select {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      color: var(--text);
+      border-radius: 9px;
+      padding: 9px 10px;
+      outline: none;
+    }
+
+    .grade-select:focus,
+    .subject-select:focus {
+      border-color: #6b7280;
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+    }
+
+    .audit-row td {
+      background: #fafafa;
+    }
+
+    .audit-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .semester-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--line);
+      background: #fafafa;
+    }
+
+
+    .semester-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .metric-group {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fafafa;
+    }
+
+    .metric-group-title {
+      padding: 10px 13px;
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #f4f4f5;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .metric {
+      padding: 12px 13px;
+      min-width: 0;
+    }
+
+    .metric + .metric {
+      border-left: 1px solid var(--line);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric-value {
+      margin-top: 4px;
+      font-size: 20px;
+      font-weight: 760;
+      letter-spacing: -0.025em;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .progress {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .semester-result {
+      font-weight: 700;
+      font-size: 15px;
+      text-align: right;
+    }
+
+    .note {
+      margin-top: 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .note strong {
+      color: var(--text);
+    }
+
+    .grade-scale {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .grade-chip {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: #374151;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 820px) {
+      .page {
+        width: min(100% - 20px, 1120px);
+        margin-top: 20px;
+      }
+
+      .summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .semester-head,
+      .semester-footer {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      th,
+      td {
+        padding: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .summary {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .summary-card {
+        min-height: 92px;
+        padding: 13px;
+      }
+
+      .summary-value {
+        font-size: 25px;
+      }
+
+      .semester-metrics {
+        grid-template-columns: 1fr;
+        padding: 12px 14px;
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .semester-footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .semester-result {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <h1>SGPA & CGPA Calculator</h1>
+      <p>B.Tech. Computer Science and Engineering · Semesters 1–3</p>
+    </header>
+
+    <section class="summary" aria-label="GPA summary">
+      <div class="summary-card">
+        <div class="summary-label">Semester 1 SGPA</div>
+        <div class="summary-value" id="summary-s1">—</div>
+        <div class="summary-status" id="status-s1">Enter all grades</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Semester 2 SGPA</div>
+        <div class="summary-value" id="summary-s2">—</div>
+        <div class="summary-status" id="status-s2">Enter all grades</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Semester 3 SGPA</div>
+        <div class="summary-value" id="summary-s3">—</div>
+        <div class="summary-status" id="status-s3">Enter all grades</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Current CGPA</div>
+        <div class="summary-value" id="summary-cgpa">—</div>
+        <div class="summary-status" id="status-cgpa">Complete semesters in order</div>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <nav class="tabs" aria-label="Semester navigation">
+        <button class="tab active" data-semester="1">Semester 1</button>
+        <button class="tab" data-semester="2">Semester 2</button>
+        <button class="tab" data-semester="3">Semester 3</button>
+      </nav>
+
+      <div>
+        <button class="share-btn" id="copy-share-link" type="button">Copy Share Link</button>
+        <div class="share-status" id="share-status" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div id="semester-container"></div>
+
+    <section class="note">
+      <strong>Calculation:</strong>
+      SGPA = Σ(Credit × Grade Point) ÷ Σ(Credits). CGPA is calculated cumulatively in semester order using the same credit-weighted method. If any subject has an
+      <strong>FF</strong> grade, that semester is marked failed and its SGPA is not displayed.
+      The Semester 2 audit course is excluded from SGPA/CGPA.
+      <div class="grade-scale" id="grade-scale"></div>
+    </section>
+  </main>
+
+  <script>
+    const GRADE_POINTS = {
+      EX: 10,
+      AA: 9,
+      AB: 8.5,
+      BB: 8,
+      BC: 7.5,
+      CC: 7,
+      CD: 6.5,
+      DD: 6,
+      DE: 5.5,
+      EE: 5,
+      FF: 0
+    };
+
+    const semesters = [
+      {
+        id: 1,
+        title: "Semester 1",
+        credits: 21,
+        subjects: [
+          { code: "24AF1000BS101", name: "Engineering Mathematics – I", credits: 3 },
+          { code: "24AF1000CC111A", name: "Yoga Education", credits: 2 },
+          { code: "24AF1000ES106A", name: "Programming for Problem Solving", credits: 2 },
+          { code: "24AF1000ESL107A", name: "Programming for Problem Solving Lab", credits: 1 },
+          { code: "24AF1000VS109", name: "Communication Skills", credits: 2 },
+          { code: "24AF1000VSL108", name: "Workshop Practices", credits: 2 },
+          { code: "24AF1000VSL110", name: "Communication Skills Lab", credits: 1 },
+          { code: "24AF1CHEBS102", name: "Engineering Chemistry", credits: 3 },
+          { code: "24AF1CHEBSL103", name: "Engineering Chemistry Lab", credits: 1 },
+          { code: "24AF1EMES104", name: "Engineering Mechanics", credits: 3 },
+          { code: "24AF1EMESL105", name: "Engineering Mechanics Lab", credits: 1 }
+        ]
+      },
+      {
+        id: 2,
+        title: "Semester 2",
+        credits: 23,
+        subjects: [
+          { code: "24AF1000BS201", name: "Engineering Mathematics – II", credits: 3 },
+          { code: "24AF1000CC212C", name: "Health and Wellness", credits: 2 },
+          { code: "24AF1000ES206A", name: "Basic Electrical and Electronics Engineering", credits: 3 },
+          { code: "24AF1000ES208", name: "Basic Civil and Mechanical Engineering", credits: 3 },
+          { code: "24AF1000ESL207A", name: "Basic Electrical and Electronics Engineering Lab", credits: 1 },
+          { code: "24AF1000IKS210F", name: "Ancient Indian Mathematics", credits: 2 },
+          { code: "24AF1000VS211", name: "Design Thinking", credits: 2 },
+          { code: "24AF1EEEES209", name: "Energy and Environmental Engineering", credits: 0, audit: true },
+          { code: "24AF1EGES204", name: "Engineering Graphics", credits: 2 },
+          { code: "24AF1EGESL205", name: "Engineering Graphics Lab", credits: 1 },
+          { code: "24AF1PHYBS202", name: "Engineering Physics", credits: 3 },
+          { code: "24AF1PHYBSL203", name: "Engineering Physics Lab", credits: 1 }
+        ]
+      },
+      {
+        id: 3,
+        title: "Semester 3",
+        credits: 25,
+        subjects: [
+          { code: "25AF1000BS301", name: "Engineering Mathematics - III", credits: 3 },
+          { code: "25AF1000VE308A", name: "Life of Chhatrapati Shivaji Maharaj", credits: 1 },
+          { code: "25AF1245PC302", name: "Data Structures", credits: 3 },
+          { code: "25AF1245PC303", name: "Discrete Mathematics", credits: 3 },
+          { code: "25AF1245PC304", name: "Object-Oriented Programming", credits: 2 },
+          { code: "25AF1245PC307", name: "Digital Electronics", credits: 2 },
+          { code: "25AF1245PCL309", name: "Data Structures Laboratory", credits: 1 },
+          { code: "25AF1245PCL311", name: "Object-Oriented Programming in Java Laboratory", credits: 1 },
+          { code: "25AF1245PCL312", name: "Digital Electronics Laboratory", credits: 1 },
+          {
+            credits: 2,
+            elective: true,
+            options: [
+              { code: "25AF1293MD306", name: "Electrical and Electronics Measurements" },
+              { code: "25AF1844MD306", name: "Analog and Digital Electronics" }
+            ]
+          },
+          { code: "25AF1LAWOEM05C", name: "Right to Information and Good Governance", credits: 3 },
+          { code: "25AF1UHVVE310", name: "Universal Human Values - II", credits: 3 }
+        ]
+      }
+    ];
+
+    const semesterContainer = document.getElementById("semester-container");
+
+    function gradeOptions() {
+      return `
+        <option value="">Select grade</option>
+        ${Object.entries(GRADE_POINTS)
+          .map(([grade, point]) => `<option value="${grade}">${grade} — ${point}</option>`)
+          .join("")}
+      `;
+    }
+
+    function renderSemester(semester) {
+      const section = document.createElement("section");
+      section.className = `semester ${semester.id === 1 ? "active" : ""}`;
+      section.dataset.semester = semester.id;
+
+      const rows = semester.subjects.map((subject, index) => {
+        if (subject.audit) {
+          return `
+            <tr class="audit-row">
+              <td class="code">${subject.code}</td>
+              <td>
+                <div class="subject">${subject.name}</div>
+                <div class="audit-note">Audit / non-credit course — excluded from GPA</div>
+              </td>
+              <td class="credits">0</td>
+              <td class="grade-cell">—</td>
+            </tr>
+          `;
+        }
+
+        let codeCell = `<span class="code">${subject.code}</span>`;
+        let nameCell = `<span class="subject">${subject.name}</span>`;
+
+        if (subject.elective) {
+          const options = subject.options.map((opt, i) =>
+            `<option value="${i}">${opt.code} · ${opt.name}</option>`
+          ).join("");
+
+          codeCell = `<span class="code mdm-code">${subject.options[0].code}</span>`;
+          nameCell = `
+            <select class="subject-select mdm-select" data-semester="${semester.id}" data-index="${index}">
+              ${options}
+            </select>
+          `;
+        }
+
+        return `
+          <tr>
+            <td>${codeCell}</td>
+            <td>${nameCell}</td>
+            <td class="credits">${subject.credits}</td>
+            <td class="grade-cell">
+              <select
+                class="grade-select"
+                data-semester="${semester.id}"
+                data-index="${index}"
+                aria-label="${subject.name || "Multidisciplinary Course"} grade">
+                ${gradeOptions()}
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      const gradableCount = semester.subjects.filter(s => !s.audit).length;
+
+      section.innerHTML = `
+        <div class="semester-head">
+          <div>
+            <h2 class="semester-title">${semester.title}</h2>
+            <div class="semester-meta">${semester.credits} total credits</div>
+          </div>
+          <button class="reset-btn" type="button" data-reset="${semester.id}">Reset</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Subject Code</th>
+                <th>Subject</th>
+                <th class="credits">Credits</th>
+                <th>Grade</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+
+        <div class="semester-metrics">
+          <div class="metric-group">
+            <div class="metric-group-title">Semester Total</div>
+            <div class="metric-grid">
+              <div class="metric">
+                <div class="metric-label">Credits</div>
+                <div class="metric-value" id="credits-s${semester.id}">${semester.credits}</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Grade Points</div>
+                <div class="metric-value" id="gp-s${semester.id}">—</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">SGPA</div>
+                <div class="metric-value" id="metric-sgpa-s${semester.id}">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-group">
+            <div class="metric-group-title">Overall up to Semester ${semester.id}</div>
+            <div class="metric-grid">
+              <div class="metric">
+                <div class="metric-label">Credits</div>
+                <div class="metric-value" id="overall-credits-s${semester.id}">—</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Grade Points</div>
+                <div class="metric-value" id="overall-gp-s${semester.id}">—</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">CGPA</div>
+                <div class="metric-value" id="metric-cgpa-s${semester.id}">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="semester-footer">
+          <div class="progress" id="progress-s${semester.id}">
+            0 of ${gradableCount} grades entered
+          </div>
+          <div class="semester-result" id="result-s${semester.id}">
+            SGPA: —
+          </div>
+        </div>
+      `;
+
+      semesterContainer.appendChild(section);
+    }
+
+    semesters.forEach(renderSemester);
+
+    document.getElementById("grade-scale").innerHTML =
+      Object.entries(GRADE_POINTS)
+        .map(([grade, point]) => `<span class="grade-chip">${grade} = ${point}</span>`)
+        .join("");
+
+
+    // ---------------------------------------------------------------------
+    // Shareable state
+    // ---------------------------------------------------------------------
+    // The state is intentionally obfuscated rather than encrypted:
+    // grades -> numeric codes -> compact bytes -> XOR -> Base64URL.
+    // This prevents casual human-readable inspection of grades in the URL.
+    // The payload lives in the URL fragment (#s=...), which is not sent to
+    // the GitHub Pages server as part of the HTTP request.
+
+    const SHARE_VERSION = 1;
+    const SHARE_KEY = [83, 71, 80, 65, 45, 67, 71, 80, 65, 45, 50, 48, 50, 54];
+    const GRADE_ORDER = ["", "EX", "AA", "AB", "BB", "BC", "CC", "CD", "DD", "DE", "EE", "FF"];
+
+    function xorBytes(bytes) {
+      return bytes.map((byte, i) => byte ^ SHARE_KEY[i % SHARE_KEY.length]);
+    }
+
+    function bytesToBase64Url(bytes) {
+      let binary = "";
+      bytes.forEach(byte => {
+        binary += String.fromCharCode(byte);
+      });
+
+      return btoa(binary)
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/g, "");
+    }
+
+    function base64UrlToBytes(value) {
+      let base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+      while (base64.length % 4) base64 += "=";
+
+      const binary = atob(base64);
+      return Array.from(binary, char => char.charCodeAt(0));
+    }
+
+    function checksum(bytes) {
+      return bytes.reduce((sum, byte, index) => (sum + byte * (index + 1)) & 0xffff, 0);
+    }
+
+    function collectShareStateBytes() {
+      const gradeSelects = [...document.querySelectorAll(".grade-select")];
+
+      const gradeCodes = gradeSelects.map(select => {
+        const index = GRADE_ORDER.indexOf(select.value);
+        return index >= 0 ? index : 0;
+      });
+
+      const mdmSelections = [...document.querySelectorAll(".mdm-select")].map(select =>
+        Math.max(0, Math.min(255, Number(select.value) || 0))
+      );
+
+      // Header: version, grade count, MDM count.
+      const data = [
+        SHARE_VERSION,
+        gradeCodes.length,
+        mdmSelections.length,
+        ...gradeCodes,
+        ...mdmSelections
+      ];
+
+      const sum = checksum(data);
+      data.push((sum >> 8) & 0xff, sum & 0xff);
+
+      return data;
+    }
+
+    function encodeShareState() {
+      return bytesToBase64Url(xorBytes(collectShareStateBytes()));
+    }
+
+    function decodeShareState(encoded) {
+      try {
+        const decoded = xorBytes(base64UrlToBytes(encoded));
+
+        if (decoded.length < 5) return null;
+
+        const version = decoded[0];
+        const gradeCount = decoded[1];
+        const mdmCount = decoded[2];
+
+        if (version !== SHARE_VERSION) return null;
+
+        const expectedLength = 3 + gradeCount + mdmCount + 2;
+        if (decoded.length !== expectedLength) return null;
+
+        const dataWithoutChecksum = decoded.slice(0, -2);
+        const storedChecksum =
+          (decoded[decoded.length - 2] << 8) | decoded[decoded.length - 1];
+
+        if (checksum(dataWithoutChecksum) !== storedChecksum) return null;
+
+        const gradesStart = 3;
+        const gradesEnd = gradesStart + gradeCount;
+        const mdmEnd = gradesEnd + mdmCount;
+
+        const gradeCodes = decoded.slice(gradesStart, gradesEnd);
+        const mdmSelections = decoded.slice(gradesEnd, mdmEnd);
+
+        if (gradeCodes.some(code => code < 0 || code >= GRADE_ORDER.length)) {
+          return null;
+        }
+
+        return { gradeCodes, mdmSelections };
+      } catch {
+        return null;
+      }
+    }
+
+    function applyShareState(state) {
+      if (!state) return false;
+
+      const gradeSelects = [...document.querySelectorAll(".grade-select")];
+
+      if (state.gradeCodes.length !== gradeSelects.length) {
+        return false;
+      }
+
+      gradeSelects.forEach((select, index) => {
+        select.value = GRADE_ORDER[state.gradeCodes[index]] || "";
+      });
+
+      const mdmSelects = [...document.querySelectorAll(".mdm-select")];
+
+      state.mdmSelections.forEach((value, index) => {
+        const select = mdmSelects[index];
+        if (!select) return;
+
+        const safeValue = String(
+          Math.max(0, Math.min(select.options.length - 1, Number(value) || 0))
+        );
+
+        select.value = safeValue;
+        select.dispatchEvent(new Event("change"));
+      });
+
+      return true;
+    }
+
+    function getSharedStateFromUrl() {
+      const hash = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : window.location.hash;
+
+      const params = new URLSearchParams(hash);
+      const encoded = params.get("s");
+
+      if (!encoded) return null;
+      return decodeShareState(encoded);
+    }
+
+    function buildShareUrl() {
+      const url = new URL(window.location.href);
+      url.hash = `s=${encodeShareState()}`;
+      return url.toString();
+    }
+
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      textarea.style.pointerEvents = "none";
+
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      const copied = document.execCommand("copy");
+      textarea.remove();
+
+      if (!copied) {
+        throw new Error("Copy failed");
+      }
+    }
+
+    const tabButtons = document.querySelectorAll(".tab");
+    const semesterSections = document.querySelectorAll(".semester");
+
+    tabButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        const semesterId = button.dataset.semester;
+
+        tabButtons.forEach(btn => btn.classList.toggle("active", btn === button));
+        semesterSections.forEach(section => {
+          section.classList.toggle("active", section.dataset.semester === semesterId);
+        });
+      });
+    });
+
+    document.querySelectorAll(".mdm-select").forEach(select => {
+      select.addEventListener("change", () => {
+        const semesterId = Number(select.dataset.semester);
+        const subjectIndex = Number(select.dataset.index);
+        const subject = semesters
+          .find(s => s.id === semesterId)
+          .subjects[subjectIndex];
+
+        const selected = subject.options[Number(select.value)];
+        const row = select.closest("tr");
+        row.querySelector(".mdm-code").textContent = selected.code;
+      });
+    });
+
+    function semesterState(semester) {
+      const selects = [...document.querySelectorAll(
+        `.grade-select[data-semester="${semester.id}"]`
+      )];
+
+      const entered = selects.filter(s => s.value !== "").length;
+      const complete = entered === selects.length;
+      const hasFail = complete && selects.some(s => s.value === "FF");
+
+      if (!complete) {
+        return {
+          complete: false,
+          hasFail: false,
+          entered,
+          total: selects.length,
+          sgpa: null,
+          gradePoints: null
+        };
+      }
+
+      let weightedPoints = 0;
+      let totalCredits = 0;
+
+      selects.forEach(select => {
+        const index = Number(select.dataset.index);
+        const subject = semester.subjects[index];
+        const gradePoint = GRADE_POINTS[select.value];
+
+        weightedPoints += subject.credits * gradePoint;
+        totalCredits += subject.credits;
+      });
+
+      return {
+        complete: true,
+        hasFail,
+        entered,
+        total: selects.length,
+        sgpa: hasFail ? null : weightedPoints / totalCredits,
+        gradePoints: weightedPoints
+      };
+    }
+
+    function updateAll() {
+      const states = semesters.map(semester => ({
+        semester,
+        state: semesterState(semester)
+      }));
+
+      // Cumulative figures are only valid in strict semester order.
+      let cumulativeGradePoints = 0;
+      let cumulativeCredits = 0;
+      let sequenceValid = true;
+
+      const cumulative = {};
+
+      states.forEach(({ semester, state }) => {
+        if (sequenceValid && state.complete && !state.hasFail) {
+          cumulativeGradePoints += state.gradePoints;
+          cumulativeCredits += semester.credits;
+
+          cumulative[semester.id] = {
+            credits: cumulativeCredits,
+            gradePoints: cumulativeGradePoints,
+            cgpa: cumulativeGradePoints / cumulativeCredits
+          };
+        } else {
+          cumulative[semester.id] = null;
+          sequenceValid = false;
+        }
+      });
+
+      states.forEach(({ semester, state }) => {
+        const summaryValue = document.getElementById(`summary-s${semester.id}`);
+        const summaryStatus = document.getElementById(`status-s${semester.id}`);
+        const progress = document.getElementById(`progress-s${semester.id}`);
+        const result = document.getElementById(`result-s${semester.id}`);
+
+        const semesterGp = document.getElementById(`gp-s${semester.id}`);
+        const semesterSgpa = document.getElementById(`metric-sgpa-s${semester.id}`);
+
+        const overallCredits = document.getElementById(`overall-credits-s${semester.id}`);
+        const overallGp = document.getElementById(`overall-gp-s${semester.id}`);
+        const overallCgpa = document.getElementById(`metric-cgpa-s${semester.id}`);
+
+        progress.textContent = `${state.entered} of ${state.total} grades entered`;
+
+        if (!state.complete) {
+          summaryValue.textContent = "—";
+          summaryStatus.textContent = "Enter all grades";
+          summaryStatus.classList.remove("error");
+
+          result.textContent = "SGPA: —";
+          result.classList.remove("error");
+
+          semesterGp.textContent = "—";
+          semesterSgpa.textContent = "—";
+          overallCredits.textContent = "—";
+          overallGp.textContent = "—";
+          overallCgpa.textContent = "—";
+          return;
+        }
+
+        semesterGp.textContent = state.gradePoints.toFixed(2);
+
+        if (state.hasFail) {
+          summaryValue.textContent = "—";
+          summaryStatus.textContent = "FF present";
+          summaryStatus.classList.add("error");
+
+          result.textContent = "SGPA: Not awarded (FF)";
+          result.classList.add("error");
+
+          semesterSgpa.textContent = "—";
+          overallCredits.textContent = "—";
+          overallGp.textContent = "—";
+          overallCgpa.textContent = "—";
+          return;
+        }
+
+        const sgpa = state.sgpa.toFixed(2);
+        summaryValue.textContent = sgpa;
+        summaryStatus.textContent =
+          `${semester.credits} credits · ${state.gradePoints.toFixed(2)} grade points`;
+        summaryStatus.classList.remove("error");
+
+        result.textContent = `SGPA: ${sgpa}`;
+        result.classList.remove("error");
+
+        semesterSgpa.textContent = sgpa;
+
+        const c = cumulative[semester.id];
+        if (c) {
+          overallCredits.textContent = c.credits;
+          overallGp.textContent = c.gradePoints.toFixed(2);
+          overallCgpa.textContent = c.cgpa.toFixed(2);
+        } else {
+          overallCredits.textContent = "—";
+          overallGp.textContent = "—";
+          overallCgpa.textContent = "—";
+        }
+      });
+
+      const cgpaValue = document.getElementById("summary-cgpa");
+      const cgpaStatus = document.getElementById("status-cgpa");
+
+      let lastValidSemester = 0;
+      let lastCumulative = null;
+
+      states.forEach(({ semester }) => {
+        if (cumulative[semester.id]) {
+          lastValidSemester = semester.id;
+          lastCumulative = cumulative[semester.id];
+        }
+      });
+
+      if (!lastCumulative) {
+        cgpaValue.textContent = "—";
+        cgpaStatus.textContent = "Complete semesters in order";
+        return;
+      }
+
+      cgpaValue.textContent = lastCumulative.cgpa.toFixed(2);
+      cgpaStatus.textContent =
+        `${lastCumulative.credits} credits · ${lastCumulative.gradePoints.toFixed(2)} grade points`;
+    }
+
+    document.querySelectorAll(".grade-select").forEach(select => {
+      select.addEventListener("change", updateAll);
+    });
+
+    document.querySelectorAll("[data-reset]").forEach(button => {
+      button.addEventListener("click", () => {
+        const semesterId = button.dataset.reset;
+
+        document
+          .querySelectorAll(`.grade-select[data-semester="${semesterId}"]`)
+          .forEach(select => select.value = "");
+
+        updateAll();
+      });
+    });
+
+
+    const shareButton = document.getElementById("copy-share-link");
+    const shareStatus = document.getElementById("share-status");
+
+    shareButton.addEventListener("click", async () => {
+      const shareUrl = buildShareUrl();
+
+      try {
+        await copyText(shareUrl);
+        shareStatus.textContent = "Link copied.";
+      } catch {
+        // Last-resort fallback: expose the URL in a prompt so it can still be copied.
+        window.prompt("Copy this share link:", shareUrl);
+        shareStatus.textContent = "Share link generated.";
+      }
+
+      window.setTimeout(() => {
+        shareStatus.textContent = "";
+      }, 2500);
+    });
+
+    const sharedState = getSharedStateFromUrl();
+
+    if (window.location.hash.includes("s=")) {
+      if (sharedState && applyShareState(sharedState)) {
+        shareStatus.textContent = "Shared details loaded.";
+      } else {
+        shareStatus.textContent = "Invalid or incompatible share link.";
+        shareStatus.classList.add("error");
+      }
+    }
+
+    updateAll();
+  </script>
+</body>
+</html>
