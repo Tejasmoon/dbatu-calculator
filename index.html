@@ -2251,6 +2251,40 @@
       }
       button.is-loading::before { animation: none !important; }
     }
+
+    /* Snackbar notification (submit + shared-link messages). */
+    .snackbar {
+      position: fixed;
+      left: 50%;
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      z-index: 3000;
+      max-width: min(92vw, 420px);
+      padding: 11px 18px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 560;
+      line-height: 1.35;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 16px);
+      transition: opacity .22s ease, transform .22s var(--ease-out, ease);
+    }
+    .snackbar.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, 0);
+    }
+    .snackbar.snackbar-error { background: var(--danger); color: #fff !important; }
+    @media (prefers-reduced-motion: reduce) {
+      .snackbar { transition: none; }
+    }
+    @media print {
+      .snackbar { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -2394,7 +2428,7 @@
       <div class="share-area">
         <button class="report-open-btn" id="open-grade-report" type="button" disabled>Grade Report PDF</button>
         <button class="share-btn" id="copy-share-link" type="button">Copy Share Link</button>
-        <div class="share-status" id="share-status" aria-live="polite"></div>
+        <button class="share-btn" id="submit-share-link" type="button">Submit</button>
       </div>
     </div>
 
@@ -2416,7 +2450,6 @@
               <button class="report-action-secondary" id="save-grade-report-jpg" type="button">Save as JPG</button>
             </div>
 
-            <div class="report-export-status" id="report-export-status" aria-live="polite"></div>
           </aside>
 
           <div class="report-preview-shell" id="report-preview-shell">
@@ -2503,7 +2536,29 @@
 
   </main>
 
+  <div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
+
   <script>
+    // ---- Snackbar: all transient notifications are shown here --------------
+    let snackbarTimer = null;
+
+    function showSnackbar(message, isError = false, clearAfterMs = 2800) {
+      const snackbar = document.getElementById("snackbar");
+      if (!snackbar) return;
+      window.clearTimeout(snackbarTimer);
+      if (!message) { snackbar.classList.remove("show"); return; }
+      snackbar.textContent = message;
+      snackbar.classList.toggle("snackbar-error", isError);
+      snackbar.classList.add("show");
+      if (clearAfterMs) {
+        snackbarTimer = window.setTimeout(() => snackbar.classList.remove("show"), clearAfterMs);
+      }
+    }
+
+    function hideSnackbar() {
+      showSnackbar("");
+    }
+
     const GRADE_POINTS = Object.freeze({
       EX: 10,
       AA: 9,
@@ -3542,11 +3597,54 @@
       return { encode, decode };
     })();
 
-    const SHARE_VERSION = 4;        // current format (obfuscated, includes student details)
-    const LEGACY_SHARE_VERSION = 3; // older links (simple XOR) still open
+    // =====================================================================
+    // SHARE LINKS
+    // ---------------------------------------------------------------------
+    // The current format (v5) stores every grade by SUBJECT CODE, not by its
+    // position in the list. Links therefore keep working when semesters or
+    // subjects are added, removed, reordered or moved between semesters.
+    // Older links (v3 / v4) are read through a frozen snapshot of the
+    // curriculum as it was when they were made, then restored by subject code
+    // as well, so they survive curriculum changes too.
+    //
+    // RULES FOR EDITING THE CURRICULUM LATER
+    //   • Add, remove, reorder or move subjects and semesters freely.
+    //   • Never reuse an existing subject code for a different subject.
+    //   • If a subject's code changes, add  "OLD_CODE": "NEW_CODE"  to
+    //     SUBJECT_CODE_ALIASES below so older links follow the new code.
+    //   • Never edit SHARE_CODEC, the LEGACY_* / V6_* constants, subjectFingerprint(),
+    //     or the v5 / v6 layouts. The V6_* tables may only be APPENDED to.
+    //     (New data can be added later as a new section tag; older pages
+    //     simply skip section tags they don't know.)
+    // =====================================================================
+    const SHARE_VERSION = 6;        // current format: compact subject fingerprints, sectioned
+    const SHARE_VERSION_V5 = 5;     // subject codes as full text (longer links)
+    const SHARE_VERSION_V4 = 4;     // older positional format (obfuscated, with details)
+    const LEGACY_SHARE_VERSION = 3; // oldest positional format (simple XOR, no details)
     const SHARE_KEY = [83,71,80,65,45,67,71,80,65,45,50,48,50,54,78,69,80,79,76,68];
-    const SHARE_GRADE_ORDER = ["","EX","AA","AB","BB","BC","CC","CD","DD","DE","EE","FF","PP"];
-    const SHARE_SCHEMES = ["nep", "nonnep", "old"];
+
+    // Renamed subject codes: "OLD_CODE": "NEW_CODE". Chains are followed.
+    const SUBJECT_CODE_ALIASES = {
+      // "24AF1000BS101": "26AF1000BS101",
+    };
+
+    // ---- FROZEN: positional tables used only to read v3/v4 links. Do not edit. ----
+    const LEGACY_GRADE_ORDER = ["","EX","AA","AB","BB","BC","CC","CD","DD","DE","EE","FF","PP"];
+    const LEGACY_SCHEMES = ["nep", "nonnep", "old"];
+    const LEGACY_YEAR_CODES = ["", "FIRST", "SECOND", "THIRD", "FOURTH"];
+    const LEGACY_EXAM_PATTERNS = [
+      "{season} Semester Examinations {year}",
+      "Supplementary {season} Semester Examination {year}",
+      "Remedial {season} Semester Examination {year}",
+      "Revaluation {season} Semester Examinations {year}",
+      "Revaluation Supplementary {season} Semester Examination {year}"
+    ];
+    const LEGACY_EXAM_SEASONS = ["Winter", "Summer"];
+    // Curriculum layout at the time v3/v4 links were created.
+    // g = graded slots in order: [semesterId, code] or [semesterId, [elective option codes]]
+    // e = elective slots in order: [semesterId, [option codes]]
+    const LEGACY_LAYOUT = Object.freeze({"nep":{"g":[[1,"24AF1000BS101"],[1,"24AF1000CC111A"],[1,"24AF1000ES106A"],[1,"24AF1000ESL107A"],[1,"24AF1000VS109"],[1,"24AF1000VSL108"],[1,"24AF1000VSL110"],[1,"24AF1CHEBS102"],[1,"24AF1CHEBSL103"],[1,"24AF1EMES104"],[1,"24AF1EMESL105"],[2,"24AF1000BS201"],[2,"24AF1000CC212C"],[2,"24AF1000ES206A"],[2,"24AF1000ES208"],[2,"24AF1000ESL207A"],[2,"24AF1000IKS210F"],[2,"24AF1000VS211"],[2,"24AF1EGES204"],[2,"24AF1EGESL205"],[2,"24AF1PHYBS202"],[2,"24AF1PHYBSL203"],[3,"25AF1000BS301"],[3,"25AF1000VE308A"],[3,"25AF1245PC302"],[3,"25AF1245PC303"],[3,"25AF1245PC304"],[3,"25AF1245PC307"],[3,"25AF1245PCL309"],[3,"25AF1245PCL311"],[3,"25AF1245PCL312"],[3,["25AF1293MD306","25AF1844MD306"]],[3,"25AF1LAWOEM05C"],[3,"25AF1UHVVE310"]],"e":[[3,["25AF1293MD306","25AF1844MD306"]]]},"nonnep":{"g":[[1,"BTBS101"],[1,"BTBS102P"],[1,"BTES103G"],[1,"BTHM104"],[1,"BTES105"],[1,"BTBS107PL"],[1,"BTES108GL"],[1,"BTHM109L"],[2,"BTBS201"],[2,"BTBS202"],[2,"BTES203"],[2,"BTES204"],[2,"BTES205"],[2,"BTBS207L"],[2,"BTES208L"],[2,"BTES210S"],[3,"BTBS301"],[3,"BTCOC302"],[3,"BTCOC303"],[3,"BTCOC304"],[3,"BTCOC305B"],[3,"BTCOL306"],[3,"BTCOS307"],[4,"BTBSC404"],[4,"BTCOC401"],[4,"BTCOC402"],[4,"BTCOL406"],[4,"BTCOS407"],[4,"BTES405"],[4,"BTHM403"],[4,"BTUHV34"],[5,"BTCOC501"],[5,"BTCOC502"],[5,"BTCOC503"],[5,"BTCOE504A"],[5,"BTCOL506"],[5,"BTCOM507"],[5,"BTHM505B"],[6,"BTCOC601"],[6,"BTCOC602"],[6,"BTCOC603"],[6,"BTCOE604B"],[6,"BTCOL606"],[6,"BTCOM607"],[6,["BTHM605B","BTHM605C"]],[7,"BTCOC701"],[7,"BTCOC702"],[7,"BTCOE703"],[7,"BTCOE704"],[7,"BTCOE705"],[7,"BTCOL707"],[7,"BTCOS708"],[8,"BTCOF801"]],"e":[[6,["BTHM605B","BTHM605C"]]]},"old":{"g":[[1,"BTBS101"],[1,"BTBS102P"],[1,"BTES103G"],[1,"BTHM104"],[1,"BTES105"],[1,"BTBS107PL"],[1,"BTES108GL"],[1,"BTHM109L"],[2,"BTBS201"],[2,"BTBS202"],[2,"BTES203"],[2,"BTES204"],[2,"BTES205"],[2,"BTBS207L"],[2,"BTES208L"],[2,"BTES210S"],[3,"BTBS301"],[3,"BTCOC302"],[3,"BTCOC303"],[3,"BTCOC304"],[3,"BTCOC305B"],[3,"BTCOL306"],[3,"BTCOS307"],[4,"BTBSC404"],[4,"BTCOC401"],[4,"BTCOC402"],[4,"BTCOL406"],[4,"BTCOS407"],[4,"BTES405"],[4,"BTHM403"],[5,"BTCOC501"],[5,"BTCOC502"],[5,"BTCOC503"],[5,"BTCOE504A"],[5,"BTCOL506"],[5,"BTCOM507"],[5,"BTHM505B"],[6,"BTCOC601"],[6,"BTCOC602"],[6,"BTCOC603"],[6,"BTCOE604B"],[6,"BTCOL606"],[6,"BTCOM607"],[6,["BTHM605B","BTHM605C"]],[7,"BTCOC701"],[7,"BTCOC702"],[7,"BTCOE703"],[7,"BTCOE704"],[7,"BTCOE705"],[7,"BTCOL707"],[7,"BTCOS708"],[8,"BTCOF801"]],"e":[[6,["BTHM605B","BTHM605C"]]]}});
+    // ---- end of frozen tables ----
 
     function xorBytes(bytes) {
       return bytes.map((byte, index) => byte ^ SHARE_KEY[index % SHARE_KEY.length]);
@@ -3589,108 +3687,372 @@
       return slots;
     }
 
-    // Core calculator state: active scheme/semesters, grades and elective choices.
-    function collectCoreShareBytes(version) {
-      const data = [
-        version,
-        Math.max(0, SHARE_SCHEMES.indexOf(state.activeScheme))
-      ];
-
-      SHARE_SCHEMES.forEach(schemeKey => {
-        data.push(state.activeSemester[schemeKey] || 1);
-      });
-
-      SHARE_SCHEMES.forEach(schemeKey => {
-        data.push(allGradableSlots(schemeKey).length);
-        data.push(allElectiveSlots(schemeKey).length);
-      });
-
-      SHARE_SCHEMES.forEach(schemeKey => {
-        allGradableSlots(schemeKey).forEach(([semesterId, index]) => {
-          const grade = getStoredGrade(schemeKey, semesterId, index);
-          const code = SHARE_GRADE_ORDER.indexOf(grade);
-          data.push(code >= 0 ? code : 0);
-        });
-      });
-
-      SHARE_SCHEMES.forEach(schemeKey => {
-        allElectiveSlots(schemeKey).forEach(([semesterId, index]) => {
-          data.push(
-            Math.max(0, Math.min(255, selectedElectiveIndex(schemeKey, semesterId, index)))
-          );
-        });
-      });
-
-      return data;
+    // ---- Byte helpers --------------------------------------------------------
+    function utf8Bytes(text) {
+      return Array.from(new TextEncoder().encode(String(text || "")));
     }
 
-    // Student details block. Only filled-in details are included; missing ones stay empty
-    // when the link is opened. Layout: flags, then [exam] [PRN] [name] [year] as flagged.
-    const DETAIL_FLAG_EXAM = 1, DETAIL_FLAG_PRN = 2, DETAIL_FLAG_NAME = 4, DETAIL_FLAG_YEAR = 8;
-    const EXAM_KIND_LISTED = 1, EXAM_KIND_TEXT = 2;
-    const SHARE_YEAR_CODES = ["", "FIRST", "SECOND", "THIRD", "FOURTH"];
+    function pushStr8(data, text) {
+      const bytes = utf8Bytes(text);
+      if (bytes.length > 0xFF) throw new Error("Share value too long");
+      data.push(bytes.length, ...bytes);
+    }
 
     function pushShareString(data, text) {
-      const bytes = Array.from(new TextEncoder().encode(String(text)));
+      const bytes = utf8Bytes(text);
       const length = Math.min(bytes.length, 0xFFFF);
       data.push(length >> 8, length & 0xFF, ...bytes.slice(0, length));
     }
 
-    function collectDetailBytes() {
+    function shareReader(bytes, start = 0, end = bytes.length) {
+      let cursor = start;
+      const need = count => {
+        if (cursor + count > end) throw new Error("truncated share data");
+      };
+      const text = length => {
+        need(length);
+        const value = new TextDecoder("utf-8", { fatal: true })
+          .decode(new Uint8Array(bytes.slice(cursor, cursor + length)));
+        cursor += length;
+        return value;
+      };
+      const reader = {
+        u8() { need(1); return bytes[cursor++]; },
+        u16() { need(2); const value = (bytes[cursor] << 8) | bytes[cursor + 1]; cursor += 2; return value; },
+        text(length) { return text(length); },
+        str8() { return text(reader.u8()); },
+        str16() { return text(reader.u16()); },
+        sub(length) { need(length); const child = shareReader(bytes, cursor, cursor + length); cursor += length; return child; },
+        done() { return cursor >= end; },
+        get cursor() { return cursor; }
+      };
+      return reader;
+    }
+
+    function commonPrefix(values) {
+      if (!values.length) return "";
+      let prefix = values[0];
+      values.forEach(value => {
+        while (prefix && !value.startsWith(prefix)) prefix = prefix.slice(0, -1);
+      });
+      return prefix;
+    }
+
+    // ---- v5 encoder ------------------------------------------------------------
+    // Layout: [5] then sections of [tag u8][length u16][payload]. Unknown tags are skipped.
+    const SECTION_META = 1;     // str8 activeScheme
+    const SECTION_SCHEME = 2;   // str8 schemeKey, u8 activeSemester, u8 semesterCount,
+                                //   per semester: u8 id, str8 codePrefix, u8 count,
+                                //   per entry: str8 codeSuffix, str8 grade ("" = elective choice only)
+    const SECTION_DETAILS = 3;  // u8 flags, then as flagged: str16 exam, str16 prn, str16 name, str8 year
+    const DETAIL_FLAG_EXAM = 1, DETAIL_FLAG_PRN = 2, DETAIL_FLAG_NAME = 4, DETAIL_FLAG_YEAR = 8;
+
+    // Entries for one scheme, grouped by semester: { code, grade }.
+    // Electives are stored by the chosen option's code, which also records the choice.
+    function collectShareEntries(schemeKey) {
+      const bySemester = new Map();
+      CURRICULA[schemeKey].semesters.forEach(semester => {
+        const entries = [];
+        semester.subjects.forEach((subject, index) => {
+          const grade = subject.audit ? "" : getStoredGrade(schemeKey, semester.id, index);
+          if (subject.elective && Array.isArray(subject.options)) {
+            const selected = selectedElectiveIndex(schemeKey, semester.id, index);
+            const option = subject.options[selected];
+            if (option && option.code && (grade || selected !== 0)) {
+              entries.push({ code: option.code, grade });
+            }
+          } else if (subject.code && grade) {
+            entries.push({ code: subject.code, grade });
+          }
+        });
+        if (entries.length) bySemester.set(semester.id, entries);
+      });
+      return bySemester;
+    }
+
+    // ---- v6 (current) --------------------------------------------------------------
+    // Each graded subject is 3 bytes: a 20-bit fingerprint of its subject code plus a
+    // 4-bit grade. Grades stay tied to subject codes (not positions), so links survive
+    // curriculum changes, but are ~4x shorter than v5.
+    //
+    // Layout: [6] then sections [tag u8][length varint][payload]; unknown tags are skipped.
+    //   tag 1  active scheme: schemeRef
+    //   tag 2  scheme: schemeRef, activeSemester varint, then groups until the end:
+    //          semesterId varint, count varint, count × 3 bytes (fingerprint20 | grade4),
+    //          then a vstr for every entry whose grade nibble is 15 (grade not in table)
+    //   tag 3  details: u8 flags, then as flagged:
+    //          exam listed (2 bytes: pattern<<4|season, year-2000) or exam text (vstr),
+    //          prn vstr, name vstr, year (u8 table index, 255 = followed by vstr)
+    //   schemeRef = u8 index into V6_SCHEMES, or 255 followed by vstr key.
+    //
+    // APPEND-ONLY tables (never reorder or remove entries):
+    const V6_SCHEMES = ["nep", "nonnep", "old"];
+    const V6_GRADES = ["", "EX", "AA", "AB", "BB", "BC", "CC", "CD", "DD", "DE", "EE", "FF", "PP"]; // max 15 entries; 15 = escape
+    const V6_YEARS = ["FIRST", "SECOND", "THIRD", "FOURTH"];
+    const V6_EXAM_PATTERNS = LEGACY_EXAM_PATTERNS.slice(); // may be appended to, max 16
+    const V6_EXAM_SEASONS = LEGACY_EXAM_SEASONS.slice();   // may be appended to, max 16
+    const V6_TAG_ACTIVE = 1, V6_TAG_SCHEME = 2, V6_TAG_DETAILS = 3;
+    const V6_EXAM_LISTED = 1, V6_EXAM_TEXT = 2, V6_PRN = 4, V6_NAME = 8, V6_YEAR = 16;
+    const V6_GRADE_ESCAPE = 15;
+
+    // FROZEN: 20-bit FNV-1a fingerprint of a subject code. Never change.
+    function subjectFingerprint(code) {
+      let hash = 0x811C9DC5;
+      utf8Bytes(code).forEach(byte => {
+        hash ^= byte;
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+      });
+      return ((hash >>> 20) ^ hash) & 0xFFFFF;
+    }
+
+    function pushVarint(data, value) {
+      let number = Math.max(0, Math.trunc(Number(value) || 0));
+      while (number >= 0x80) { data.push((number & 0x7F) | 0x80); number = Math.floor(number / 128); }
+      data.push(number);
+    }
+
+    function readVarint(reader) {
+      let value = 0, scale = 1;
+      for (let i = 0; i < 5; i++) {
+        const byte = reader.u8();
+        value += (byte & 0x7F) * scale;
+        if (!(byte & 0x80)) return value;
+        scale *= 128;
+      }
+      throw new Error("bad varint");
+    }
+
+    function pushVstr(data, text) {
+      const bytes = utf8Bytes(text);
+      pushVarint(data, bytes.length);
+      data.push(...bytes);
+    }
+
+    function readVstr(reader) {
+      return reader.text(readVarint(reader));
+    }
+
+    function pushSchemeRef(data, schemeKey) {
+      const index = V6_SCHEMES.indexOf(schemeKey);
+      if (index >= 0) data.push(index);
+      else { data.push(255); pushVstr(data, schemeKey); }
+    }
+
+    function readSchemeRef(reader) {
+      const index = reader.u8();
+      return index === 255 ? readVstr(reader) : (V6_SCHEMES[index] || "");
+    }
+
+    function encodeListedExam(exam) {
+      const match = /(\d{4})/.exec(exam);
+      if (!match) return null;
+      const year = Number(match[1]);
+      if (year < 2000 || year > 2255) return null;
+      for (let p = 0; p < V6_EXAM_PATTERNS.length && p < 16; p++) {
+        for (let q = 0; q < V6_EXAM_SEASONS.length && q < 16; q++) {
+          const name = V6_EXAM_PATTERNS[p].replace("{season}", V6_EXAM_SEASONS[q]).replace("{year}", String(year));
+          if (name === exam) return [(p << 4) | q, year - 2000];
+        }
+      }
+      return null;
+    }
+
+    function encodeShareState() {
+      const out = [SHARE_VERSION];
+      const pushSection = (tag, payload) => {
+        out.push(tag);
+        pushVarint(out, payload.length);
+        out.push(...payload);
+      };
+
+      const active = [];
+      pushSchemeRef(active, state.activeScheme);
+      pushSection(V6_TAG_ACTIVE, active);
+
+      Object.keys(CURRICULA).forEach(schemeKey => {
+        const firstId = CURRICULA[schemeKey].semesters[0].id;
+        const activeSemester = state.activeSemester[schemeKey] || firstId;
+        const bySemester = collectShareEntries(schemeKey);
+        if (!bySemester.size && activeSemester === firstId) return; // nothing to keep
+
+        const payload = [];
+        pushSchemeRef(payload, schemeKey);
+        pushVarint(payload, activeSemester);
+        bySemester.forEach((entries, semesterId) => {
+          pushVarint(payload, semesterId);
+          pushVarint(payload, entries.length);
+          const escaped = [];
+          entries.forEach(entry => {
+            let grade = V6_GRADES.indexOf(entry.grade);
+            if (grade < 0 || grade >= V6_GRADE_ESCAPE) { grade = V6_GRADE_ESCAPE; escaped.push(entry.grade); }
+            const packed = subjectFingerprint(entry.code) * 16 + grade; // 24 bits
+            payload.push((packed >>> 16) & 0xFF, (packed >>> 8) & 0xFF, packed & 0xFF);
+          });
+          escaped.forEach(grade => pushVstr(payload, grade));
+        });
+        pushSection(V6_TAG_SCHEME, payload);
+      });
+
       const clean = id => String(document.getElementById(id).value || "").trim().replace(/\s+/g, " ");
       const exam = clean("report-examination");
       const prn = clean("report-prn");
       const name = clean("report-student-name");
-      const yearCode = SHARE_YEAR_CODES.indexOf(yearSelect ? yearSelect.value : "");
-
+      const year = yearSelect ? String(yearSelect.value || "") : "";
       let flags = 0;
       const body = [];
       if (exam) {
-        flags |= DETAIL_FLAG_EXAM;
-        const parts = examState.choice !== EXAM_OTHER ? examNameParts.get(exam) : null;
-        if (parts) {
-          const [patternIndex, seasonIndex, year] = parts;
-          body.push(EXAM_KIND_LISTED, patternIndex, seasonIndex, year >> 8, year & 0xFF);
-        } else {
-          body.push(EXAM_KIND_TEXT);
-          pushShareString(body, exam);
-        }
+        const listed = encodeListedExam(exam);
+        if (listed) { flags |= V6_EXAM_LISTED; body.push(...listed); }
+        else { flags |= V6_EXAM_TEXT; pushVstr(body, exam); }
       }
-      if (prn) { flags |= DETAIL_FLAG_PRN; pushShareString(body, prn); }
-      if (name) { flags |= DETAIL_FLAG_NAME; pushShareString(body, name); }
-      if (yearCode > 0) { flags |= DETAIL_FLAG_YEAR; body.push(yearCode); }
-      return [flags, ...body];
+      if (prn) { flags |= V6_PRN; pushVstr(body, prn); }
+      if (name) { flags |= V6_NAME; pushVstr(body, name); }
+      if (year) {
+        flags |= V6_YEAR;
+        const index = V6_YEARS.indexOf(year);
+        if (index >= 0) body.push(index);
+        else { body.push(255); pushVstr(body, year); }
+      }
+      if (flags) pushSection(V6_TAG_DETAILS, [flags, ...body]);
+
+      return SHARE_CODEC.encode(out);
     }
 
-    function encodeShareState() {
-      return SHARE_CODEC.encode([...collectCoreShareBytes(SHARE_VERSION), ...collectDetailBytes()]);
+    function parseShareV6(bytes) {
+      const reader = shareReader(bytes, 1);
+      const result = { activeScheme: "", schemes: {}, details: null };
+      while (!reader.done()) {
+        const tag = reader.u8();
+        const section = reader.sub(readVarint(reader));
+        if (tag === V6_TAG_ACTIVE) {
+          result.activeScheme = readSchemeRef(section);
+        } else if (tag === V6_TAG_SCHEME) {
+          const schemeKey = readSchemeRef(section);
+          const scheme = { activeSemester: readVarint(section), entries: [] };
+          while (!section.done()) {
+            const semesterId = readVarint(section);
+            const count = readVarint(section);
+            const group = [];
+            for (let i = 0; i < count; i++) {
+              const packed = (section.u8() << 16) | (section.u8() << 8) | section.u8();
+              group.push({ semesterId, fingerprint: packed >>> 4, gradeIndex: packed & 0xF });
+            }
+            group.forEach(entry => {
+              const grade = entry.gradeIndex === V6_GRADE_ESCAPE
+                ? readVstr(section)
+                : (V6_GRADES[entry.gradeIndex] || "");
+              scheme.entries.push({ semesterId: entry.semesterId, fingerprint: entry.fingerprint, grade });
+            });
+          }
+          result.schemes[schemeKey] = scheme;
+        } else if (tag === V6_TAG_DETAILS) {
+          const details = { exam: "", prn: "", name: "", year: "" };
+          const flags = section.u8();
+          if (flags & V6_EXAM_LISTED) {
+            const code = section.u8();
+            const year = 2000 + section.u8();
+            const pattern = V6_EXAM_PATTERNS[code >> 4];
+            const season = V6_EXAM_SEASONS[code & 0xF];
+            if (pattern && season) details.exam = pattern.replace("{season}", season).replace("{year}", String(year));
+          } else if (flags & V6_EXAM_TEXT) {
+            details.exam = readVstr(section);
+          }
+          if (flags & V6_PRN) details.prn = readVstr(section);
+          if (flags & V6_NAME) details.name = readVstr(section);
+          if (flags & V6_YEAR) {
+            const index = section.u8();
+            details.year = index === 255 ? readVstr(section) : (V6_YEARS[index] || "");
+          }
+          result.details = details;
+        }
+        // Any other tag: added by a newer version of this page; skipped safely.
+      }
+      return result;
     }
 
-    // Parses the core state; returns { shared, cursor } or null.
+    // Development check: warns if two current subjects in a scheme share a fingerprint.
+    (function checkSubjectFingerprints() {
+      Object.keys(CURRICULA).forEach(schemeKey => {
+        const seen = new Map();
+        CURRICULA[schemeKey].semesters.forEach(semester => semester.subjects.forEach(subject => {
+          const codes = subject.elective && Array.isArray(subject.options)
+            ? subject.options.map(option => option.code)
+            : [subject.code];
+          codes.filter(Boolean).forEach(code => {
+            const fp = subjectFingerprint(code);
+            if (seen.has(fp) && seen.get(fp) !== code) {
+              console.warn(`Share links: subject codes ${seen.get(fp)} and ${code} (${schemeKey}) share a fingerprint.`);
+            }
+            seen.set(fp, code);
+          });
+        }));
+      });
+    })();
+
+    // ---- v5 decoder ------------------------------------------------------------
+    // Returns the normalized form used by applyShareState:
+    // { activeScheme, schemes: { key: { activeSemester, entries: [{ semesterId, code, grade }] } }, details }
+    function parseShareV5(bytes) {
+      const reader = shareReader(bytes, 1);
+      const result = { activeScheme: "", schemes: {}, details: null };
+      while (!reader.done()) {
+        const tag = reader.u8();
+        const section = reader.sub(reader.u16());
+        if (tag === SECTION_META) {
+          result.activeScheme = section.str8();
+        } else if (tag === SECTION_SCHEME) {
+          const schemeKey = section.str8();
+          const scheme = { activeSemester: section.u8(), entries: [] };
+          const semesterCount = section.u8();
+          for (let s = 0; s < semesterCount; s++) {
+            const semesterId = section.u8();
+            const prefix = section.str8();
+            const count = section.u8();
+            for (let i = 0; i < count; i++) {
+              const code = prefix + section.str8();
+              scheme.entries.push({ semesterId, code, grade: section.str8() });
+            }
+          }
+          result.schemes[schemeKey] = scheme;
+        } else if (tag === SECTION_DETAILS) {
+          const details = { exam: "", prn: "", name: "", year: "" };
+          const flags = section.u8();
+          if (flags & DETAIL_FLAG_EXAM) details.exam = section.str16();
+          if (flags & DETAIL_FLAG_PRN) details.prn = section.str16();
+          if (flags & DETAIL_FLAG_NAME) details.name = section.str16();
+          if (flags & DETAIL_FLAG_YEAR) details.year = section.str8();
+          result.details = details;
+        }
+        // Any other tag: added by a newer version of this page; skipped safely.
+      }
+      return result;
+    }
+
+    // ---- v3 / v4 decoders (positional, read through LEGACY_LAYOUT) ----------------
     function parseCoreShareBytes(body) {
-      if (body.length < 2 + SHARE_SCHEMES.length + SHARE_SCHEMES.length * 2) return null;
+      if (body.length < 2 + LEGACY_SCHEMES.length + LEGACY_SCHEMES.length * 2) return null;
       let cursor = 1; // skip version
       const activeSchemeIndex = body[cursor++];
 
       const activeSemesters = {};
-      SHARE_SCHEMES.forEach(schemeKey => {
+      LEGACY_SCHEMES.forEach(schemeKey => {
         activeSemesters[schemeKey] = body[cursor++];
       });
 
       const counts = {};
-      SHARE_SCHEMES.forEach(schemeKey => {
+      LEGACY_SCHEMES.forEach(schemeKey => {
         counts[schemeKey] = { grades: body[cursor++], electives: body[cursor++] };
       });
 
       const gradeCodes = {};
-      SHARE_SCHEMES.forEach(schemeKey => {
+      LEGACY_SCHEMES.forEach(schemeKey => {
         const count = counts[schemeKey].grades;
         gradeCodes[schemeKey] = body.slice(cursor, cursor + count);
         cursor += count;
       });
 
       const electiveCodes = {};
-      SHARE_SCHEMES.forEach(schemeKey => {
+      LEGACY_SCHEMES.forEach(schemeKey => {
         const count = counts[schemeKey].electives;
         electiveCodes[schemeKey] = body.slice(cursor, cursor + count);
         cursor += count;
@@ -3700,55 +4062,90 @@
       return { shared: { activeSchemeIndex, activeSemesters, gradeCodes, electiveCodes }, cursor };
     }
 
-    function parseDetailBytes(bytes, start) {
-      let cursor = start;
-      const need = count => {
-        if (cursor + count > bytes.length) throw new Error("truncated details");
-      };
-      const readString = () => {
-        need(2);
-        const length = (bytes[cursor] << 8) | bytes[cursor + 1];
-        cursor += 2;
-        need(length);
-        const text = new TextDecoder("utf-8", { fatal: true }).decode(new Uint8Array(bytes.slice(cursor, cursor + length)));
-        cursor += length;
-        return text;
-      };
+    // Converts positional v3/v4 data into the normalized, code-based form.
+    function legacyCoreToNormalized(core) {
+      const schemes = {};
+      for (const schemeKey of LEGACY_SCHEMES) {
+        const layout = LEGACY_LAYOUT[schemeKey];
+        const grades = core.gradeCodes[schemeKey];
+        const choices = core.electiveCodes[schemeKey];
+        if (!layout || grades.length !== layout.g.length || choices.length !== layout.e.length) return null;
 
+        const choiceFor = new Map();
+        layout.e.forEach(([semesterId, options], i) => {
+          const index = choices[i] < options.length ? choices[i] : 0;
+          choiceFor.set(`${semesterId}|${options.join(",")}`, index);
+        });
+
+        const entries = [];
+        const usedElectives = new Set();
+        layout.g.forEach(([semesterId, codeOrOptions], i) => {
+          const grade = LEGACY_GRADE_ORDER[grades[i]] || "";
+          if (Array.isArray(codeOrOptions)) {
+            const key = `${semesterId}|${codeOrOptions.join(",")}`;
+            usedElectives.add(key);
+            const selected = choiceFor.get(key) || 0;
+            if (grade || selected !== 0) entries.push({ semesterId, code: codeOrOptions[selected], grade });
+          } else if (grade) {
+            entries.push({ semesterId, code: codeOrOptions, grade });
+          }
+        });
+        // Elective choices on ungraded (audit) slots.
+        layout.e.forEach(([semesterId, options]) => {
+          const key = `${semesterId}|${options.join(",")}`;
+          const selected = choiceFor.get(key) || 0;
+          if (!usedElectives.has(key) && selected !== 0) entries.push({ semesterId, code: options[selected], grade: "" });
+        });
+
+        schemes[schemeKey] = { activeSemester: core.activeSemesters[schemeKey], entries };
+      }
+      return {
+        activeScheme: LEGACY_SCHEMES[core.activeSchemeIndex] || LEGACY_SCHEMES[0],
+        schemes,
+        details: null
+      };
+    }
+
+    function composeLegacyExaminationName(patternIndex, seasonIndex, year) {
+      const pattern = LEGACY_EXAM_PATTERNS[patternIndex];
+      const season = LEGACY_EXAM_SEASONS[seasonIndex];
+      if (!pattern || !season || !year) return "";
+      return pattern.replace("{season}", season).replace("{year}", String(year));
+    }
+
+    // v4 details block: flags, then [exam] [PRN] [name] [year] as flagged.
+    function parseLegacyDetailBytes(bytes, start) {
+      const reader = shareReader(bytes, start);
       const details = { exam: "", prn: "", name: "", year: "" };
-      if (cursor === bytes.length) return details; // no details block
-      need(1);
-      const flags = bytes[cursor++];
+      if (reader.done()) return details;
+      const flags = reader.u8();
       if (flags & ~15) throw new Error("unknown detail flags");
 
       if (flags & DETAIL_FLAG_EXAM) {
-        need(1);
-        const kind = bytes[cursor++];
-        if (kind === EXAM_KIND_LISTED) {
-          need(4);
-          const [patternIndex, seasonIndex] = [bytes[cursor], bytes[cursor + 1]];
-          const year = (bytes[cursor + 2] << 8) | bytes[cursor + 3];
-          cursor += 4;
-          details.exam = composeExaminationName(patternIndex, seasonIndex, year);
+        const kind = reader.u8();
+        if (kind === 1) {
+          const patternIndex = reader.u8();
+          const seasonIndex = reader.u8();
+          const year = reader.u16();
+          details.exam = composeLegacyExaminationName(patternIndex, seasonIndex, year);
           if (!details.exam) throw new Error("bad exam");
-        } else if (kind === EXAM_KIND_TEXT) {
-          details.exam = readString();
+        } else if (kind === 2) {
+          details.exam = reader.str16();
         } else {
           throw new Error("bad exam kind");
         }
       }
-      if (flags & DETAIL_FLAG_PRN) details.prn = readString();
-      if (flags & DETAIL_FLAG_NAME) details.name = readString();
+      if (flags & DETAIL_FLAG_PRN) details.prn = reader.str16();
+      if (flags & DETAIL_FLAG_NAME) details.name = reader.str16();
       if (flags & DETAIL_FLAG_YEAR) {
-        need(1);
-        details.year = SHARE_YEAR_CODES[bytes[cursor++]] || "";
+        details.year = LEGACY_YEAR_CODES[reader.u8()] || "";
         if (!details.year) throw new Error("bad year");
       }
-      if (cursor !== bytes.length) throw new Error("trailing bytes");
+      if (!reader.done()) throw new Error("trailing bytes");
       return details;
     }
 
-    // Older (v3) links: simple XOR + 16-bit checksum, no student details.
+    // Oldest (v3) links: simple XOR + 16-bit checksum, no student details.
     function decodeLegacyShareState(encoded) {
       try {
         const decoded = xorBytes(base64UrlToBytes(encoded));
@@ -3758,7 +4155,7 @@
         if (checksum(body) !== storedChecksum) return null;
         const core = parseCoreShareBytes(body);
         if (!core || core.cursor !== body.length) return null;
-        return { ...core.shared, details: null };
+        return legacyCoreToNormalized(core.shared);
       } catch {
         return null;
       }
@@ -3766,16 +4163,95 @@
 
     function decodeShareState(encoded) {
       const plain = SHARE_CODEC.decode(encoded);
-      if (plain && plain[0] === SHARE_VERSION) {
+      if (plain) {
         try {
-          const core = parseCoreShareBytes(plain);
-          if (!core) return null;
-          return { ...core.shared, details: parseDetailBytes(plain, core.cursor) };
+          if (plain[0] === SHARE_VERSION) return parseShareV6(plain);
+          if (plain[0] === SHARE_VERSION_V5) return parseShareV5(plain);
+          if (plain[0] === SHARE_VERSION_V4) {
+            const core = parseCoreShareBytes(plain);
+            if (!core) return null;
+            const normalized = legacyCoreToNormalized(core.shared);
+            if (!normalized) return null;
+            normalized.details = parseLegacyDetailBytes(plain, core.cursor);
+            return normalized;
+          }
         } catch {
           return null;
         }
+        return null; // made by a newer, unknown format
       }
       return decodeLegacyShareState(encoded);
+    }
+
+    // ---- Restoring a shared link ---------------------------------------------------
+    // Finds where a subject code lives in the current curriculum: same semester first,
+    // then any other semester (subject moved). Follows SUBJECT_CODE_ALIASES.
+    // Fingerprint index per scheme: fingerprint -> locations of current subjects
+    // (and of subjects that renamed codes point to).
+    const fingerprintIndexCache = new Map();
+    function fingerprintIndex(schemeKey) {
+      if (fingerprintIndexCache.has(schemeKey)) return fingerprintIndexCache.get(schemeKey);
+      const index = new Map();
+      const add = (fp, location) => {
+        if (!index.has(fp)) index.set(fp, []);
+        const list = index.get(fp);
+        if (!list.some(item => item.semesterId === location.semesterId && item.index === location.index && item.optionIndex === location.optionIndex)) {
+          list.push(location);
+        }
+      };
+      CURRICULA[schemeKey].semesters.forEach(semester => {
+        semester.subjects.forEach((subject, i) => {
+          if (subject.elective && Array.isArray(subject.options)) {
+            subject.options.forEach((option, optionIndex) => {
+              if (option.code) add(subjectFingerprint(option.code), { semesterId: semester.id, index: i, subject, optionIndex });
+            });
+          } else if (subject.code) {
+            add(subjectFingerprint(subject.code), { semesterId: semester.id, index: i, subject, optionIndex: -1 });
+          }
+        });
+      });
+      Object.keys(SUBJECT_CODE_ALIASES).forEach(oldCode => {
+        const found = resolveSharedSubject(schemeKey, 0, oldCode);
+        if (found) add(subjectFingerprint(oldCode), found);
+      });
+      fingerprintIndexCache.set(schemeKey, index);
+      return index;
+    }
+
+    // Same semester first; otherwise the one unambiguous match anywhere in the scheme.
+    function resolveSharedFingerprint(schemeKey, semesterId, fingerprint) {
+      const candidates = fingerprintIndex(schemeKey).get(fingerprint) || [];
+      const sameSemester = candidates.filter(item => item.semesterId === semesterId);
+      if (sameSemester.length === 1) return sameSemester[0];
+      if (sameSemester.length > 1) return null;
+      return candidates.length === 1 ? candidates[0] : null;
+    }
+
+    function resolveSharedSubject(schemeKey, semesterId, code) {
+      let target = code;
+      const seen = new Set();
+      while (Object.prototype.hasOwnProperty.call(SUBJECT_CODE_ALIASES, target) && !seen.has(target)) {
+        seen.add(target);
+        target = SUBJECT_CODE_ALIASES[target];
+      }
+      if (!target) return null;
+
+      const semesters = CURRICULA[schemeKey].semesters;
+      const ordered = [
+        ...semesters.filter(semester => semester.id === semesterId),
+        ...semesters.filter(semester => semester.id !== semesterId)
+      ];
+      for (const semester of ordered) {
+        for (let index = 0; index < semester.subjects.length; index++) {
+          const subject = semester.subjects[index];
+          if (subject.code === target) return { semesterId: semester.id, index, subject, optionIndex: -1 };
+          if (subject.elective && Array.isArray(subject.options)) {
+            const optionIndex = subject.options.findIndex(option => option.code === target);
+            if (optionIndex >= 0) return { semesterId: semester.id, index, subject, optionIndex };
+          }
+        }
+      }
+      return null;
     }
 
     // Restores whichever details the link contains; anything missing stays empty.
@@ -3784,7 +4260,7 @@
       setExamination(details.exam);
       document.getElementById("report-prn").value = details.prn || "";
       document.getElementById("report-student-name").value = details.name || "";
-      if (details.year && yearSelect) {
+      if (details.year && yearSelect && yearSelect.hasOption(details.year)) {
         yearSelect.setValue(details.year);
         const defaultYear = defaultYearForSemester(Number(state.activeSemester[state.activeScheme]));
         reportYearEdited = details.year !== defaultYear;
@@ -3795,46 +4271,53 @@
       updateReportActionState();
     }
 
+    // Applies a normalized shared state. Grades for subjects that no longer exist
+    // (or grades no longer allowed) are skipped and counted in shared.skipped.
     function applyShareState(shared) {
-      if (!shared) return false;
+      if (!shared || !shared.schemes) return false;
+      let skipped = 0;
 
-      for (const schemeKey of SHARE_SCHEMES) {
-        const gradableSlots = allGradableSlots(schemeKey);
-        const electiveSlots = allElectiveSlots(schemeKey);
-
-        if (
-          shared.gradeCodes[schemeKey].length !== gradableSlots.length ||
-          shared.electiveCodes[schemeKey].length !== electiveSlots.length
-        ) {
-          return false;
-        }
-      }
-
-      SHARE_SCHEMES.forEach(schemeKey => {
+      Object.keys(state.grades).forEach(schemeKey => {
         state.grades[schemeKey] = {};
         state.selections[schemeKey] = {};
+      });
 
-        allGradableSlots(schemeKey).forEach(([semesterId, index], i) => {
-          const grade = SHARE_GRADE_ORDER[shared.gradeCodes[schemeKey][i]] || "";
-          if (grade && allowedGrades(schemeKey).includes(grade)) {
-            setStoredGrade(schemeKey, semesterId, index, grade);
+      Object.entries(shared.schemes).forEach(([schemeKey, data]) => {
+        const entries = Array.isArray(data.entries) ? data.entries : [];
+        if (!CURRICULA[schemeKey] || !state.grades[schemeKey]) {
+          skipped += entries.filter(entry => entry.grade).length;
+          return;
+        }
+
+        entries.forEach(entry => {
+          const found = entry.code !== undefined
+            ? resolveSharedSubject(schemeKey, entry.semesterId, entry.code)
+            : resolveSharedFingerprint(schemeKey, entry.semesterId, entry.fingerprint);
+          if (!found) {
+            if (entry.grade) skipped++;
+            return;
+          }
+          if (found.optionIndex >= 0) {
+            state.selections[schemeKey][keyFor(found.semesterId, found.index)] = found.optionIndex;
+          }
+          if (entry.grade) {
+            if (!found.subject.audit && allowedGrades(schemeKey).includes(entry.grade)) {
+              setStoredGrade(schemeKey, found.semesterId, found.index, entry.grade);
+            } else {
+              skipped++;
+            }
           }
         });
 
-        allElectiveSlots(schemeKey).forEach(([semesterId, index], i) => {
-          const subject = getSemester(schemeKey, semesterId).subjects[index];
-          state.selections[schemeKey][keyFor(semesterId, index)] =
-            clampElectiveIndex(subject, shared.electiveCodes[schemeKey][i]);
-        });
-
-        const requested = shared.activeSemesters[schemeKey];
+        const requested = Number(data.activeSemester);
         const exists = CURRICULA[schemeKey].semesters.some(semester => semester.id === requested);
         state.activeSemester[schemeKey] = exists ? requested : CURRICULA[schemeKey].semesters[0].id;
       });
 
-      state.activeScheme =
-        SHARE_SCHEMES[shared.activeSchemeIndex] || "nep";
+      if (CURRICULA[shared.activeScheme]) state.activeScheme = shared.activeScheme;
+      else if (!CURRICULA[state.activeScheme]) state.activeScheme = Object.keys(CURRICULA)[0];
 
+      shared.skipped = skipped;
       return true;
     }
 
@@ -4601,11 +5084,11 @@
       preview.style.height = `${Math.round(cssWidth * preview.height / preview.width)}px`;
     }
 
+    let reportPreviewErrorShown = false;
+
     function fitReportPreview() {
       const shell = document.getElementById("report-preview-shell");
       const preview = document.getElementById("grade-report-preview-canvas");
-      const status = document.getElementById("report-export-status");
-
       if (!shell || !preview) return;
 
       try {
@@ -4632,18 +5115,14 @@
         context.drawImage(rendered, 0, 0);
         sizeReportPreview();
 
-        if (status && status.dataset.previewError === "true") {
-          status.textContent = "";
-          status.classList.remove("error");
-          delete status.dataset.previewError;
+        if (reportPreviewErrorShown) {
+          reportPreviewErrorShown = false;
+          hideSnackbar();
         }
       } catch (error) {
         console.error("Could not render grade report preview:", error);
-        if (status) {
-          status.textContent = error?.message || "Could not render the report preview.";
-          status.classList.add("error");
-          status.dataset.previewError = "true";
-        }
+        reportPreviewErrorShown = true;
+        showSnackbar(error?.message || "Could not render the report preview.", true, 0);
       }
     }
 
@@ -4677,8 +5156,7 @@
       reportReturnFocus = document.activeElement;
       CustomSelect.instances.forEach(select => select.close({ instant: true }));
       syncReportFields();
-      document.getElementById("report-export-status").textContent = "";
-      document.getElementById("report-export-status").classList.remove("error");
+      hideSnackbar();
       overlay.classList.add("open");
       overlay.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
@@ -5748,16 +6226,11 @@
     }
 
     function setExportBusy(busy, message = "", isError = false) {
-      const status = document.getElementById("report-export-status");
-
       reportExportBusy = busy;
       updateReportActionState();
 
-      if (status.textContent !== message) {
-        status.textContent = message;
-        if (message) replayAnimation(status, "status-in");
-      }
-      status.classList.toggle("error", isError);
+      // Progress messages stay until the next update; results fade out on their own.
+      showSnackbar(message, isError, busy ? 0 : (isError ? 6000 : 3500));
     }
 
     function reportDetailsReady() {
@@ -5880,23 +6353,6 @@
     });
 
     const shareButton = document.getElementById("copy-share-link");
-    const shareStatus = document.getElementById("share-status");
-
-    let shareStatusTimer = null;
-
-    function showShareStatus(message, isError = false, clearAfterMs = 2400) {
-      window.clearTimeout(shareStatusTimer);
-      shareStatus.textContent = message;
-      if (message) replayAnimation(shareStatus, "status-in");
-      shareStatus.classList.toggle("error", isError);
-      if (clearAfterMs) {
-        shareStatusTimer = window.setTimeout(() => {
-          shareStatus.textContent = "";
-          shareStatus.classList.remove("error");
-        }, clearAfterMs);
-      }
-    }
-
     // ---- Google Form logging -------------------------------------------------
     // Paste the values printed by the Apps Script (Executions log) here.
     const GOOGLE_FORM_CONFIG = {
@@ -5910,58 +6366,103 @@
 
     let lastLoggedShareKey = "";
 
-    function logShareToGoogleForm(shareUrl) {
+    // True once the user has entered any grade or any student detail
+    // (typed, or loaded from a shared link).
+    function hasUserInput() {
+      const anyGrade = Object.values(state.grades).some(grades => Object.keys(grades).length > 0);
+      const anyDetail = ["report-examination", "report-prn", "report-student-name"].some(id => {
+        const field = document.getElementById(id);
+        return field && String(field.value || "").trim() !== "";
+      });
+      return anyGrade || anyDetail;
+    }
+
+    async function logShareToGoogleForm(shareUrl, prn, name) {
       const cfg = GOOGLE_FORM_CONFIG;
-      if (!cfg || !cfg.actionUrl || cfg.actionUrl.includes("YOUR_FORM_ID")) return;
-
-      const clean = id => String(document.getElementById(id).value || "").trim().replace(/\s+/g, " ");
-      const prn = clean("report-prn");
-      const name = clean("report-student-name");
-
-      // Don't log the exact same entry twice if the button is clicked repeatedly.
-      const key = `${prn}|${name}|${shareUrl}`;
-      if (key === lastLoggedShareKey) return;
-      lastLoggedShareKey = key;
-
       const body = new URLSearchParams();
       body.append(cfg.fields.prn, prn);
       body.append(cfg.fields.name, name);
       body.append(cfg.fields.link, shareUrl);
 
       // Google Forms doesn't send CORS headers, so the response is opaque;
-      // "no-cors" still delivers the submission. keepalive lets it finish
-      // even if the user navigates away right after clicking.
-      fetch(cfg.actionUrl, {
+      // "no-cors" still delivers the submission.
+      await fetch(cfg.actionUrl, {
         method: "POST",
         mode: "no-cors",
         keepalive: true,
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: body.toString()
-      }).catch(error => {
-        lastLoggedShareKey = "";
-        console.warn("Google Form logging failed:", error);
       });
     }
 
-    shareButton.addEventListener("click", async () => {
+    const submitButton = document.getElementById("submit-share-link");
+
+    submitButton.addEventListener("click", async () => {
+      if (!hasUserInput()) {
+        showSnackbar("Nothing to submit yet. Enter your details and grades first.", true, 4000);
+        return;
+      }
+
+      const clean = id => String(document.getElementById(id).value || "").trim().replace(/\s+/g, " ");
+      const prn = clean("report-prn");
+      const name = clean("report-student-name");
+
+      if (!prn || !name) {
+        showSnackbar("Enter your PRN and name before submitting.", true, 4000);
+        return;
+      }
+
       let shareUrl;
       try {
         shareUrl = buildShareUrl();
       } catch (error) {
         console.error(error);
-        showShareStatus("Could not create the share link.", true);
+        showSnackbar("Could not create the share link.", true);
         return;
       }
 
-      // Fire-and-forget: never blocks or breaks copying.
-      try { logShareToGoogleForm(shareUrl); } catch (error) { console.warn(error); }
+      // Don't submit the exact same entry twice.
+      const key = `${prn}|${name}|${shareUrl}`;
+      if (key === lastLoggedShareKey) {
+        showSnackbar("Already submitted.");
+        return;
+      }
+
+      submitButton.disabled = true;
+      showSnackbar("Submitting…", false, 0);
+      try {
+        await logShareToGoogleForm(shareUrl, prn, name);
+        lastLoggedShareKey = key;
+        showSnackbar("Submitted.");
+      } catch (error) {
+        console.warn("Google Form submission failed:", error);
+        showSnackbar("Could not submit. Check your connection and try again.", true, 5000);
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    shareButton.addEventListener("click", async () => {
+      if (!hasUserInput()) {
+        showSnackbar("Nothing to share yet. Enter your details or grades first.", true, 4000);
+        return;
+      }
+
+      let shareUrl;
+      try {
+        shareUrl = buildShareUrl();
+      } catch (error) {
+        console.error(error);
+        showSnackbar("Could not create the share link.", true);
+        return;
+      }
 
       try {
         await copyText(shareUrl);
-        showShareStatus("Link copied.");
+        showSnackbar("Link copied.");
       } catch {
         window.prompt("Copy this share link:", shareUrl);
-        showShareStatus("Share link generated.");
+        showSnackbar("Share link generated.");
       }
     });
 
@@ -5972,10 +6473,15 @@
 
     if (window.location.hash.includes("s=")) {
       sharedApplied = Boolean(shared && applyShareState(shared));
-      if (sharedApplied) {
-        showShareStatus("Shared details loaded.", false, 4000);
+      if (sharedApplied && shared.skipped) {
+        showSnackbar(
+          `Shared details loaded. ${shared.skipped} grade${shared.skipped === 1 ? " was" : "s were"} for subjects no longer listed and skipped.`,
+          false, 7000
+        );
+      } else if (sharedApplied) {
+        showSnackbar("Shared details loaded.", false, 4000);
       } else {
-        showShareStatus("Invalid or incompatible share link.", true, 6000);
+        showSnackbar("Invalid or incompatible share link.", true, 6000);
       }
     }
 
