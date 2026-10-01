@@ -89,7 +89,7 @@
 
     .scheme-tabs {
       display: inline-grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(var(--scheme-count, 3), minmax(0, 1fr));
       gap: 4px;
       padding: 4px;
       background: #e9ebef;
@@ -932,8 +932,9 @@
       vertical-align: middle;
     }
 
+    /* All report table cells are plain white (no grey shading). */
     .report-subjects th {
-      background: #f1f1f1;
+      background: #fff;
       font-size: 7.8pt;
       text-transform: uppercase;
       text-align: center;
@@ -961,7 +962,7 @@
 
     .report-performance th {
       width: 36mm;
-      background: #f4f4f4;
+      background: #fff;
       text-transform: uppercase;
     }
 
@@ -1120,6 +1121,11 @@
       .share-area .report-open-btn {
         width: 100%;
       }
+
+      /* Provisional Marksheet gets its own row above the two other buttons. */
+      .share-area .report-open-btn {
+        grid-column: 1 / -1;
+      }
     }
 
     @media print {
@@ -1152,6 +1158,7 @@
       }
 
       main.page > .header,
+      main.page > .student-details,
       main.page > .scheme-tabs,
       main.page > .summary,
       main.page > .toolbar,
@@ -1187,7 +1194,8 @@
       }
 
       .report-builder-head,
-      .report-controls {
+      .report-controls,
+      .report-viewer {
         display: none !important;
       }
 
@@ -1372,6 +1380,7 @@
     #grade-report-page .report-performance td {
       display: table-cell !important;
       color: #000 !important;
+      background: #fff !important;
       border: 1px solid #333 !important;
       vertical-align: middle !important;
     }
@@ -1719,13 +1728,15 @@
     /* Details-only report dialog: the A4 preview is not shown on screen
        (it is still drawn for Ctrl+P printing via the print rules above). */
     @media screen {
-      .report-builder { width: min(500px, 100%); }
+      .report-builder { width: min(580px, 100%); }
+      .report-builder.is-viewing { width: min(840px, 100%); }
       .report-builder-body { display: block; min-height: 0; }
       .report-controls {
         border: 0;
         background: var(--surface);
         padding: 18px 20px 20px;
       }
+      .report-builder.is-viewing .report-controls { display: none; }
       .report-preview-shell { display: none !important; }
     }
 
@@ -2062,6 +2073,202 @@
       font-size: 12px;
       min-height: 1em;
     }
+
+    /* ===================================================================
+       Provisional Marksheet dialog: purpose picker, per-semester cards, viewer
+       =================================================================== */
+    .report-section + .report-section { margin-top: 18px; }
+
+    .report-section-label {
+      margin: 0 0 8px;
+      color: #4b5563;
+      font-size: 11px;
+      font-weight: 720;
+      text-transform: uppercase;
+      letter-spacing: .045em;
+    }
+
+    .report-section-label .req {
+      color: var(--danger);
+      font-style: normal;
+      margin-left: 2px;
+    }
+
+    .purpose-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .purpose-option { position: relative; display: block; }
+
+    .purpose-option input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .purpose-option span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.25;
+      text-align: center;
+      transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .2s ease;
+    }
+
+    .purpose-option:hover input:not(:checked) + span { border-color: #9ca3af; background: #fafafa; }
+
+    .purpose-option input:checked + span {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .purpose-option input:focus-visible + span {
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, .18);
+    }
+
+    .purpose-hint {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.4;
+      min-height: 1em;
+    }
+
+    .report-semester-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .sem-card {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .sem-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .sem-card-meta {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 11.5px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .sem-card-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .sem-export-btn {
+      min-width: 0;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 7px 4px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .sem-export-btn.is-primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .sem-export-btn:not(:disabled):hover { box-shadow: 0 4px 12px rgba(17, 24, 39, .12); }
+    .sem-export-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .sem-export-btn.is-loading:disabled { opacity: .75; cursor: wait; }
+
+    button.sem-export-btn.is-loading::before {
+      width: 10px;
+      height: 10px;
+      margin-right: 5px;
+    }
+
+    .sem-empty {
+      grid-column: 1 / -1;
+      padding: 16px 14px;
+      border: 1px dashed #d1d5db;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .report-viewer { padding: 14px 16px 18px; }
+    .report-viewer[hidden] { display: none; }
+
+    .report-viewer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .report-viewer-title {
+      flex: 1 1 auto;
+      font-size: 14px;
+      font-weight: 720;
+    }
+
+    .report-viewer-actions { display: flex; gap: 6px; }
+    .report-viewer-actions .sem-export-btn { padding: 8px 16px; }
+
+    .report-view-frame {
+      padding: 12px;
+      border-radius: 10px;
+      background: #e7e8eb;
+    }
+
+    #report-view-canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+    }
+
+    @media (max-width: 480px) {
+      .report-semester-list { grid-template-columns: 1fr; }
+      .report-view-frame { padding: 6px; }
+    }
+
     /* ===================================================================
        Motion: short, subtle transitions for every interaction.
        All of it is disabled for users who prefer reduced motion.
@@ -2242,6 +2449,12 @@
       animation: spin .7s linear infinite;
     }
 
+    button.sem-export-btn.is-loading::before {
+      width: 10px;
+      height: 10px;
+      margin-right: 5px;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: .01ms !important;
@@ -2284,7 +2497,18 @@
     }
     @media print {
       .snackbar { display: none !important; }
+
+      /* Outside admin mode, Ctrl+P never prints the marksheet. */
+      body:not(.is-admin) > * { display: none !important; }
+      body:not(.is-admin)::before {
+        content: "Printing is not available on this page.";
+        display: block;
+        padding: 20mm;
+        font: 14pt system-ui, sans-serif;
+      }
     }
+
+    .report-open-btn[hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -2306,7 +2530,7 @@
     <section class="student-details" aria-labelledby="student-details-title">
       <div class="student-details-head">
         <h2 id="student-details-title">Student Details</h2>
-        <p>Required for the grade report. Included in share links.</p>
+        <p>Included in share links and in your submission to the college.</p>
       </div>
       <div class="student-details-grid">
             <div class="report-field exam-field field-exam">
@@ -2394,11 +2618,8 @@
       <div class="report-required-hint" id="report-required-hint" aria-live="polite"></div>
     </section>
 
-    <div class="scheme-tabs" aria-label="Curriculum scheme">
-      <button class="scheme-tab active" data-scheme="nep" type="button">NEP</button>
-      <button class="scheme-tab" data-scheme="nonnep" type="button">Non-NEP</button>
-      <button class="scheme-tab" data-scheme="old" type="button">Old</button>
-    </div>
+    <!-- Tabs are generated from CURRICULA (one per scheme). -->
+    <div class="scheme-tabs" id="scheme-tabs" aria-label="Curriculum scheme"></div>
 
     <section class="summary" aria-label="Current result summary">
       <div class="summary-card">
@@ -2426,9 +2647,9 @@
     <div class="toolbar">
       <nav class="semester-tabs" id="semester-tabs" aria-label="Semester navigation"></nav>
       <div class="share-area">
-        <button class="report-open-btn" id="open-grade-report" type="button" disabled>Grade Report PDF</button>
+        <button class="report-open-btn" id="open-grade-report" type="button" disabled hidden>Provisional Marksheet</button>
         <button class="share-btn" id="copy-share-link" type="button">Copy Share Link</button>
-        <button class="share-btn" id="submit-share-link" type="button">Submit</button>
+        <button class="share-btn" id="submit-share-link" type="button">Submit to College</button>
       </div>
     </div>
 
@@ -2437,20 +2658,56 @@
     <div class="report-overlay" id="report-overlay" aria-hidden="true">
       <div class="report-builder" role="dialog" aria-modal="true" aria-labelledby="report-builder-title">
         <div class="report-builder-head">
-          <h2 id="report-builder-title">Download Grade Report</h2>
+          <h2 id="report-builder-title">Provisional Marksheet</h2>
           <button class="report-action-secondary" id="close-grade-report" type="button">Close</button>
         </div>
 
         <div class="report-builder-body">
-          <aside class="report-controls">
+          <aside class="report-controls" id="report-controls">
             <p class="report-download-summary" id="report-download-summary"></p>
 
-            <div class="report-actions">
-              <button class="report-action-primary" id="save-grade-report-pdf" type="button">Save as PDF</button>
-              <button class="report-action-secondary" id="save-grade-report-jpg" type="button">Save as JPG</button>
+            <div class="report-section">
+              <div class="report-section-label" id="report-purpose-label">Purpose <em class="req" aria-hidden="true">*</em></div>
+              <div class="purpose-options" role="radiogroup" aria-labelledby="report-purpose-label">
+                <label class="purpose-option">
+                  <input type="radio" name="report-purpose" value="Swadhar Yojana">
+                  <span>Swadhar Yojana</span>
+                </label>
+                <label class="purpose-option">
+                  <input type="radio" name="report-purpose" value="Credit Calculation">
+                  <span>Credit Calculation</span>
+                </label>
+                <label class="purpose-option">
+                  <input type="radio" name="report-purpose" value="Scholarship">
+                  <span>Scholarship</span>
+                </label>
+                <label class="purpose-option">
+                  <input type="radio" name="report-purpose" value="Marksheet Preparation">
+                  <span>Marksheet Preparation</span>
+                </label>
+              </div>
+              <div class="purpose-hint" id="report-purpose-hint" aria-live="polite"></div>
             </div>
 
+            <div class="report-section">
+              <div class="report-section-label">Semesters</div>
+              <div class="report-semester-list" id="report-semester-list"></div>
+            </div>
           </aside>
+
+          <section class="report-viewer" id="report-viewer" aria-labelledby="report-view-title" hidden>
+            <div class="report-viewer-bar">
+              <button class="report-action-secondary" id="report-view-back" type="button">Back</button>
+              <div class="report-viewer-title" id="report-view-title">Preview</div>
+              <div class="report-viewer-actions">
+                <button type="button" class="sem-export-btn is-primary" id="report-view-pdf">PDF</button>
+                <button type="button" class="sem-export-btn" id="report-view-jpg">JPG</button>
+              </div>
+            </div>
+            <div class="report-view-frame">
+              <canvas id="report-view-canvas" aria-label="Provisional marksheet preview"></canvas>
+            </div>
+          </section>
 
           <div class="report-preview-shell" id="report-preview-shell">
             <canvas id="grade-report-preview-canvas" aria-label="A4 grade report preview"></canvas>
@@ -2772,12 +3029,23 @@
       return semester.subjects.reduce((sum, subject) => sum + (subject.audit ? 0 : subject.credits), 0);
     }
 
-    const state = {
-      activeScheme: "nep",
-      activeSemester: { nep: 1, nonnep: 1, old: 1 },
-      grades: { nep: {}, nonnep: {}, old: {} },
-      selections: { nep: {}, nonnep: {}, old: {} }
-    };
+    // Everything per-scheme is built from CURRICULA, so adding a scheme or a semester
+    // only needs a change in CURRICULA (plus appending its key to V6_SCHEMES for shorter links).
+    const SCHEME_KEYS = Object.keys(CURRICULA);
+    const DEFAULT_SCHEME = SCHEME_KEYS[0];
+    const perScheme = make => Object.fromEntries(SCHEME_KEYS.map(key => [key, make(key)]));
+    const firstSemesterId = schemeKey => CURRICULA[schemeKey].semesters[0].id;
+
+    function blankSchemeState() {
+      return {
+        activeScheme: DEFAULT_SCHEME,
+        activeSemester: perScheme(firstSemesterId),
+        grades: perScheme(() => ({})),
+        selections: perScheme(() => ({}))
+      };
+    }
+
+    const state = blankSchemeState();
 
     function keyFor(semesterId, subjectIndex) {
       return `${semesterId}:${subjectIndex}`;
@@ -3170,6 +3438,14 @@
       return semester.subjects.every((subject, index) => !getStoredGrade(schemeKey, semester.id, index));
     }
 
+    // Semesters whose every graded subject has a grade (shown in the marksheet dialog).
+    function filledSemesters(schemeKey = state.activeScheme) {
+      return CURRICULA[schemeKey].semesters.filter(semester => {
+        const result = semesterState(schemeKey, semester);
+        return result.total > 0 && result.complete;
+      });
+    }
+
     // Direct second year (lateral entry): Semesters 1 and 2 are completely blank while at least
     // one later semester has grades. Such students start at Semester 3, so CGPA counts only
     // Semester 3 onward. Partially filled Semester 1/2 keeps the regular rules.
@@ -3434,12 +3710,21 @@
       }
     }
 
-    document.querySelectorAll(".scheme-tab").forEach(button => {
-      button.addEventListener("click", () => {
-        state.activeScheme = button.dataset.scheme;
-        render();
+    // One tab per scheme in CURRICULA, labelled with its `label`.
+    function renderSchemeTabs() {
+      const container = document.getElementById("scheme-tabs");
+      container.style.setProperty("--scheme-count", String(SCHEME_KEYS.length));
+      container.innerHTML = SCHEME_KEYS.map(key => `
+        <button class="scheme-tab${key === state.activeScheme ? " active" : ""}" data-scheme="${escapeHtml(key)}"
+                type="button">${escapeHtml(CURRICULA[key].label || key)}</button>`).join("");
+      container.querySelectorAll(".scheme-tab").forEach(button => {
+        button.addEventListener("click", () => {
+          state.activeScheme = button.dataset.scheme;
+          render();
+        });
       });
-    });
+    }
+    renderSchemeTabs();
 
     // ---------------------------------------------------------------------
     // Shareable state: compact numeric state -> XOR obfuscation -> Base64URL
@@ -3600,24 +3885,32 @@
     // =====================================================================
     // SHARE LINKS
     // ---------------------------------------------------------------------
-    // The current format (v5) stores every grade by SUBJECT CODE, not by its
-    // position in the list. Links therefore keep working when semesters or
-    // subjects are added, removed, reordered or moved between semesters.
-    // Older links (v3 / v4) are read through a frozen snapshot of the
-    // curriculum as it was when they were made, then restored by subject code
-    // as well, so they survive curriculum changes too.
+    // Every format ties grades to SUBJECT CODES, never to list positions, so
+    // links keep working when subjects, semesters or schemes are added.
+    //
+    //   v7 (current)  Per semester: the number of subject codes it had, a 32-bit
+    //                 signature of that set of codes, then 4 bits per code in
+    //                 sorted-code order. If subjects were added to the semester
+    //                 later, the decoder finds exactly which codes the link was
+    //                 made with (see locateV7Semester). Every new link is decoded
+    //                 again before it is handed out; if anything differs, the
+    //                 link is made in v6 instead, so a wrong link is never shared.
+    //   v6            3 bytes per grade (20-bit code fingerprint + grade).
+    //   v5            Codes as text.   v3 / v4  Positional, read via LEGACY_LAYOUT.
     //
     // RULES FOR EDITING THE CURRICULUM LATER
-    //   • Add, remove, reorder or move subjects and semesters freely.
-    //   • Never reuse an existing subject code for a different subject.
-    //   • If a subject's code changes, add  "OLD_CODE": "NEW_CODE"  to
-    //     SUBJECT_CODE_ALIASES below so older links follow the new code.
-    //   • Never edit SHARE_CODEC, the LEGACY_* / V6_* constants, subjectFingerprint(),
-    //     or the v5 / v6 layouts. The V6_* tables may only be APPENDED to.
-    //     (New data can be added later as a new section tag; older pages
-    //     simply skip section tags they don't know.)
+    //   • Add subjects, elective options, semesters and schemes freely, anywhere
+    //     in the lists (order does not matter).
+    //   • Never delete a subject, never change a subject code, never reuse a code.
+    //   • A new scheme: add it to CURRICULA and APPEND its key to V6_SCHEMES.
+    //   • Never edit SHARE_CODEC, the LEGACY_* / V6_* / V7_* constants,
+    //     subjectFingerprint(), v7ItemHash(), or the v5 / v6 / v7 layouts.
+    //     The V6_* tables may only be APPENDED to (V6_GRADES: at most 14 entries).
+    //     New data can be added later as a new section tag; older pages
+    //     simply skip section tags they don't know.
     // =====================================================================
-    const SHARE_VERSION = 6;        // current format: compact subject fingerprints, sectioned
+    const SHARE_VERSION = 7;        // current format: per-semester signature + 4 bits per subject
+    const SHARE_VERSION_V6 = 6;     // compact subject fingerprints (3 bytes per grade); still read, and the fallback
     const SHARE_VERSION_V5 = 5;     // subject codes as full text (longer links)
     const SHARE_VERSION_V4 = 4;     // older positional format (obfuscated, with details)
     const LEGACY_SHARE_VERSION = 3; // oldest positional format (simple XOR, no details)
@@ -3857,8 +4150,9 @@
       return null;
     }
 
-    function encodeShareState() {
-      const out = [SHARE_VERSION];
+    // v6 encoder: kept as the fallback when a v7 link fails its self-check.
+    function encodeShareStateV6() {
+      const out = [SHARE_VERSION_V6];
       const pushSection = (tag, payload) => {
         out.push(tag);
         pushVarint(out, payload.length);
@@ -3893,11 +4187,26 @@
         pushSection(V6_TAG_SCHEME, payload);
       });
 
+      const details = encodeDetailsPayload(false); // identical bytes to the original v6
+      if (details) pushSection(V6_TAG_DETAILS, details);
+
+      return SHARE_CODEC.encode(out);
+    }
+
+    function currentShareDetails() {
       const clean = id => String(document.getElementById(id).value || "").trim().replace(/\s+/g, " ");
-      const exam = clean("report-examination");
-      const prn = clean("report-prn");
-      const name = clean("report-student-name");
-      const year = yearSelect ? String(yearSelect.value || "") : "";
+      return {
+        exam: clean("report-examination"),
+        prn: clean("report-prn"),
+        name: clean("report-student-name"),
+        year: yearSelect ? String(yearSelect.value || "") : ""
+      };
+    }
+
+    // Details section (tag 3). compactPrn = false produces exactly the v6 layout.
+    // compactPrn = true (v7) stores an all-digit PRN at two digits per byte.
+    function encodeDetailsPayload(compactPrn) {
+      const { exam, prn, name, year } = currentShareDetails();
       let flags = 0;
       const body = [];
       if (exam) {
@@ -3905,7 +4214,10 @@
         if (listed) { flags |= V6_EXAM_LISTED; body.push(...listed); }
         else { flags |= V6_EXAM_TEXT; pushVstr(body, exam); }
       }
-      if (prn) { flags |= V6_PRN; pushVstr(body, prn); }
+      if (prn) {
+        if (compactPrn && /^\d{4,200}$/.test(prn)) { flags |= V7_PRN_DIGITS; pushDigits(body, prn); }
+        else { flags |= V6_PRN; pushVstr(body, prn); }
+      }
       if (name) { flags |= V6_NAME; pushVstr(body, name); }
       if (year) {
         flags |= V6_YEAR;
@@ -3913,10 +4225,320 @@
         if (index >= 0) body.push(index);
         else { body.push(255); pushVstr(body, year); }
       }
-      if (flags) pushSection(V6_TAG_DETAILS, [flags, ...body]);
+      return flags ? [flags, ...body] : null;
+    }
 
+    // Digit-only text (e.g. a PRN): digit count, then two digits per byte.
+    function pushDigits(data, digits) {
+      pushVarint(data, digits.length);
+      const even = digits.length % 2 ? `0${digits}` : digits;
+      for (let i = 0; i < even.length; i += 2) data.push(Number(even.slice(i, i + 2)));
+    }
+
+    function readDigits(reader) {
+      const length = readVarint(reader);
+      if (length < 1 || length > 200) throw new Error("bad digit count");
+      let text = "";
+      for (let i = 0; i < Math.ceil(length / 2); i++) {
+        const byte = reader.u8();
+        if (byte > 99) throw new Error("bad digit byte");
+        text += String(byte).padStart(2, "0");
+      }
+      return text.slice(text.length - length);
+    }
+
+    // ---- v7 (current) --------------------------------------------------------------
+    // Layout: [7] then sections [tag u8][length varint][payload]; unknown tags are skipped.
+    //   tag 1  active scheme (same as v6)
+    //   tag 3  details (same as v6, plus flag 32: PRN stored as digits)
+    //   tag 4  scheme: schemeRef, activeSemester varint, then per semester with data:
+    //          semesterId varint, itemCount varint, signature u32,
+    //          ceil(itemCount / 2) bytes of 4-bit values, then a vstr per escaped grade.
+    //   Items are ALL codes of the semester (regular, audit, every elective option),
+    //   sorted by code. 4-bit value: 0 = nothing, 1–13 = V6_GRADES index,
+    //   14 = elective option chosen without a grade, 15 = grade follows as text.
+    const V7_TAG_SCHEME = 4;
+    const V7_PRN_DIGITS = 32;
+    const V7_CHOICE_ONLY = 14;
+    const V7_GRADE_ESCAPE = 15;
+    // Upper bound on candidate sets checked when subjects were added to a semester
+    // after a link was made (covers e.g. 12 new subjects in a 24-subject semester).
+    const V7_MAX_CANDIDATES = 3000000;
+
+    // FROZEN: 32-bit hash of one subject code (FNV-1a + murmur3 finaliser). Never change.
+    function v7ItemHash(code) {
+      let hash = 0x811C9DC5;
+      utf8Bytes(code).forEach(byte => {
+        hash ^= byte;
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+      });
+      hash ^= hash >>> 16; hash = Math.imul(hash, 0x85EBCA6B) >>> 0;
+      hash ^= hash >>> 13; hash = Math.imul(hash, 0xC2B2AE35) >>> 0;
+      hash ^= hash >>> 16;
+      return hash >>> 0;
+    }
+
+    // Signature of a set of codes: sum of their hashes (order does not matter).
+    const v7Signature = items => items.reduce((sum, item) => (sum + item.hash) >>> 0, 0);
+
+    // All codes of a semester, sorted by code, so list order never matters.
+    function v7SemesterItems(semester) {
+      const items = [];
+      semester.subjects.forEach((subject, index) => {
+        if (subject.elective && Array.isArray(subject.options)) {
+          subject.options.forEach((option, optionIndex) => {
+            if (option && option.code) items.push({ code: option.code, index, optionIndex, subject });
+          });
+        } else if (subject.code) {
+          items.push({ code: subject.code, index, optionIndex: -1, subject });
+        }
+      });
+      items.sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
+      items.forEach(item => { item.hash = v7ItemHash(item.code); });
+      return items;
+    }
+
+    function v7Value(schemeKey, semesterId, item, escaped) {
+      const { subject, index, optionIndex } = item;
+      if (subject.audit) return 0;
+      const grade = getStoredGrade(schemeKey, semesterId, index);
+      if (optionIndex >= 0) {
+        const selected = selectedElectiveIndex(schemeKey, semesterId, index);
+        if (selected !== optionIndex) return 0;
+        if (!grade) return selected === 0 ? 0 : V7_CHOICE_ONLY;
+      } else if (!grade) {
+        return 0;
+      }
+      const gradeIndex = V6_GRADES.indexOf(grade);
+      if (gradeIndex > 0 && gradeIndex < V7_CHOICE_ONLY) return gradeIndex;
+      escaped.push(grade);
+      return V7_GRADE_ESCAPE;
+    }
+
+    function encodeV7SchemePayload(schemeKey) {
+      const scheme = CURRICULA[schemeKey];
+      const activeSemester = state.activeSemester[schemeKey] || firstSemesterId(schemeKey);
+      const payload = [];
+      pushSchemeRef(payload, schemeKey);
+      pushVarint(payload, activeSemester);
+      let groups = 0;
+      scheme.semesters.forEach(semester => {
+        const items = v7SemesterItems(semester);
+        const escaped = [];
+        const values = items.map(item => v7Value(schemeKey, semester.id, item, escaped));
+        if (!values.some(Boolean)) return;
+        groups++;
+        pushVarint(payload, semester.id);
+        pushVarint(payload, items.length);
+        const signature = v7Signature(items);
+        payload.push(signature >>> 24, (signature >>> 16) & 0xFF, (signature >>> 8) & 0xFF, signature & 0xFF);
+        for (let i = 0; i < values.length; i += 2) payload.push((values[i] << 4) | (values[i + 1] || 0));
+        escaped.forEach(grade => pushVstr(payload, grade));
+      });
+      return groups || activeSemester !== firstSemesterId(schemeKey) ? payload : null;
+    }
+
+    function encodeShareStateV7() {
+      const out = [SHARE_VERSION];
+      const pushSection = (tag, payload) => {
+        out.push(tag);
+        pushVarint(out, payload.length);
+        out.push(...payload);
+      };
+      const active = [];
+      pushSchemeRef(active, state.activeScheme);
+      pushSection(V6_TAG_ACTIVE, active);
+      SCHEME_KEYS.forEach(schemeKey => {
+        const payload = encodeV7SchemePayload(schemeKey);
+        if (payload) pushSection(V7_TAG_SCHEME, payload);
+      });
+      const details = encodeDetailsPayload(true);
+      if (details) pushSection(V6_TAG_DETAILS, details);
       return SHARE_CODEC.encode(out);
     }
+
+    // Current encoder: v7, verified by decoding it again; v6 if the check ever fails.
+    function encodeShareState() {
+      try {
+        const encoded = encodeShareStateV7();
+        if (shareRoundTripMatches(encoded)) return encoded;
+        console.warn("Share links: compact link failed its self-check; using the v6 format.");
+      } catch (error) {
+        console.warn("Share links: compact link could not be made; using the v6 format.", error);
+      }
+      return encodeShareStateV6();
+    }
+
+    function binomialCount(n, k) {
+      k = Math.min(k, n - k);
+      if (k < 0) return 0;
+      let result = 1;
+      for (let i = 1; i <= k; i++) {
+        result = result * (n - k + i) / i;
+        if (result > 1e15) return Infinity;
+      }
+      return Math.round(result);
+    }
+
+    // Calls visit(indices) for every k-element subset of 0..n-1; stops when visit returns true.
+    function forEachCombination(n, k, visit) {
+      const combo = Array.from({ length: k }, (_, i) => i);
+      for (;;) {
+        if (visit(combo)) return;
+        let i = k - 1;
+        while (i >= 0 && combo[i] === n - k + i) i--;
+        if (i < 0) return;
+        combo[i]++;
+        for (let j = i + 1; j < k; j++) combo[j] = combo[j - 1] + 1;
+      }
+    }
+
+    // Returns the semester's items exactly as they were when the link was made (sorted),
+    // or null if that cannot be determined with certainty.
+    // Unchanged semester: the signature of today's codes matches directly.
+    // Subjects added since: exactly `extra` of today's codes are new, and their hashes
+    // must add up to (today's signature − link signature). Every candidate set is checked;
+    // the real one always matches (subjects are never deleted), so if any OTHER set also
+    // matches, the result is ambiguous and the semester is reported as skipped instead
+    // of guessing. A wrong grade is therefore never restored.
+    function locateV7Semester(schemeKey, semesterId, count, signature) {
+      const scheme = CURRICULA[schemeKey];
+      const semester = scheme && scheme.semesters.find(item => item.id === semesterId);
+      if (!semester) return null;
+      const items = v7SemesterItems(semester);
+      const extra = items.length - count;
+      if (extra < 0) return null;
+      const total = v7Signature(items);
+      if (extra === 0) return total === signature ? items : null;
+      if (binomialCount(items.length, extra) > V7_MAX_CANDIDATES) return null;
+
+      const target = (total - signature) >>> 0;
+      let matches = 0;
+      let added = null;
+      forEachCombination(items.length, extra, combo => {
+        let sum = 0;
+        for (const i of combo) sum = (sum + items[i].hash) >>> 0;
+        if (sum === target) {
+          matches++;
+          added = combo.slice();
+        }
+        return matches > 1;
+      });
+      if (matches !== 1) return null;
+      const addedSet = new Set(added);
+      return items.filter((_, i) => !addedSet.has(i));
+    }
+
+    function parseV7Details(section) {
+      const details = { exam: "", prn: "", name: "", year: "" };
+      const flags = section.u8();
+      if (flags & V6_EXAM_LISTED) {
+        const code = section.u8();
+        const year = 2000 + section.u8();
+        const pattern = V6_EXAM_PATTERNS[code >> 4];
+        const season = V6_EXAM_SEASONS[code & 0xF];
+        if (pattern && season) details.exam = pattern.replace("{season}", season).replace("{year}", String(year));
+      } else if (flags & V6_EXAM_TEXT) {
+        details.exam = readVstr(section);
+      }
+      if (flags & V7_PRN_DIGITS) details.prn = readDigits(section);
+      else if (flags & V6_PRN) details.prn = readVstr(section);
+      if (flags & V6_NAME) details.name = readVstr(section);
+      if (flags & V6_YEAR) {
+        const index = section.u8();
+        details.year = index === 255 ? readVstr(section) : (V6_YEARS[index] || "");
+      }
+      return details;
+    }
+
+    function parseShareV7(bytes) {
+      const reader = shareReader(bytes, 1);
+      const result = { activeScheme: "", schemes: {}, details: null };
+      while (!reader.done()) {
+        const tag = reader.u8();
+        const section = reader.sub(readVarint(reader));
+        if (tag === V6_TAG_ACTIVE) {
+          result.activeScheme = readSchemeRef(section);
+        } else if (tag === V7_TAG_SCHEME) {
+          const schemeKey = readSchemeRef(section);
+          const scheme = { activeSemester: readVarint(section), entries: [], skipped: 0 };
+          while (!section.done()) {
+            const semesterId = readVarint(section);
+            const count = readVarint(section);
+            const signature = ((section.u8() << 24) | (section.u8() << 16) | (section.u8() << 8) | section.u8()) >>> 0;
+            const values = [];
+            for (let i = 0; i < count; i += 2) {
+              const byte = section.u8();
+              values.push(byte >> 4, byte & 0xF);
+            }
+            values.length = count;
+            const grades = values.map(value => value === V7_GRADE_ESCAPE
+              ? readVstr(section)
+              : (value === V7_CHOICE_ONLY ? "" : (V6_GRADES[value] || "")));
+
+            const located = locateV7Semester(schemeKey, semesterId, count, signature);
+            values.forEach((value, i) => {
+              if (!value) return;
+              const unknownGrade = !grades[i] && value !== V7_CHOICE_ONLY;
+              if (!located || unknownGrade) {
+                if (value !== V7_CHOICE_ONLY) scheme.skipped++;
+                return;
+              }
+              const item = located[i];
+              scheme.entries.push({
+                semesterId,
+                location: { semesterId, index: item.index, subject: item.subject, optionIndex: item.optionIndex },
+                grade: grades[i]
+              });
+            });
+          }
+          result.schemes[schemeKey] = scheme;
+        } else if (tag === V6_TAG_DETAILS) {
+          result.details = parseV7Details(section);
+        }
+        // Any other tag: added by a newer version of this page; skipped safely.
+      }
+      return result;
+    }
+
+    // ---- Self-check: a new link must restore exactly the current state -------------
+    function shareSignatureOf(target, details) {
+      const parts = [`A:${target.activeScheme}`];
+      SCHEME_KEYS.forEach(schemeKey => {
+        parts.push(`S:${schemeKey}:${target.activeSemester[schemeKey] || firstSemesterId(schemeKey)}`);
+        Object.entries(target.grades[schemeKey] || {}).forEach(([key, grade]) => {
+          if (grade) parts.push(`G:${schemeKey}:${key}:${grade}`);
+        });
+        Object.entries(target.selections[schemeKey] || {}).forEach(([key, choice]) => {
+          if (Number(choice)) parts.push(`E:${schemeKey}:${key}:${Number(choice)}`);
+        });
+      });
+      const d = details || {};
+      parts.push(`D:${d.exam || ""}|${d.prn || ""}|${d.name || ""}|${d.year || ""}`);
+      return parts.sort().join("\n");
+    }
+
+    function shareRoundTripMatches(encoded) {
+      const decoded = decodeShareState(encoded);
+      if (!decoded) return false;
+      const target = blankSchemeState();
+      if (!applyShareState(decoded, target) || decoded.skipped) return false;
+      return shareSignatureOf(target, decoded.details) === shareSignatureOf(state, currentShareDetails());
+    }
+
+    // Development checks (browser console only).
+    (function checkShareSetup() {
+      SCHEME_KEYS.forEach(schemeKey => {
+        if (!V6_SCHEMES.includes(schemeKey)) {
+          console.warn(`Share links: append "${schemeKey}" to the END of V6_SCHEMES (links work without it, but are longer).`);
+        }
+        CURRICULA[schemeKey].semesters.forEach(semester => {
+          const codes = v7SemesterItems(semester).map(item => item.code);
+          const duplicate = codes.find((code, i) => codes.indexOf(code) !== i);
+          if (duplicate) console.warn(`Share links: code ${duplicate} appears twice in ${schemeKey} semester ${semester.id}.`);
+        });
+      });
+    })();
 
     function parseShareV6(bytes) {
       const reader = shareReader(bytes, 1);
@@ -4165,7 +4787,8 @@
       const plain = SHARE_CODEC.decode(encoded);
       if (plain) {
         try {
-          if (plain[0] === SHARE_VERSION) return parseShareV6(plain);
+          if (plain[0] === SHARE_VERSION) return parseShareV7(plain);
+          if (plain[0] === SHARE_VERSION_V6) return parseShareV6(plain);
           if (plain[0] === SHARE_VERSION_V5) return parseShareV5(plain);
           if (plain[0] === SHARE_VERSION_V4) {
             const core = parseCoreShareBytes(plain);
@@ -4273,36 +4896,38 @@
 
     // Applies a normalized shared state. Grades for subjects that no longer exist
     // (or grades no longer allowed) are skipped and counted in shared.skipped.
-    function applyShareState(shared) {
+    // `target` is the live state by default; the link self-check passes a scratch copy.
+    function applyShareState(shared, target = state) {
       if (!shared || !shared.schemes) return false;
       let skipped = 0;
 
-      Object.keys(state.grades).forEach(schemeKey => {
-        state.grades[schemeKey] = {};
-        state.selections[schemeKey] = {};
+      SCHEME_KEYS.forEach(schemeKey => {
+        target.grades[schemeKey] = {};
+        target.selections[schemeKey] = {};
       });
 
       Object.entries(shared.schemes).forEach(([schemeKey, data]) => {
         const entries = Array.isArray(data.entries) ? data.entries : [];
-        if (!CURRICULA[schemeKey] || !state.grades[schemeKey]) {
+        skipped += Number(data.skipped) || 0; // v7 semesters that could not be matched
+        if (!CURRICULA[schemeKey]) {
           skipped += entries.filter(entry => entry.grade).length;
           return;
         }
 
         entries.forEach(entry => {
-          const found = entry.code !== undefined
+          // v7 entries arrive already located; older formats are resolved by code / fingerprint.
+          const found = entry.location || (entry.code !== undefined
             ? resolveSharedSubject(schemeKey, entry.semesterId, entry.code)
-            : resolveSharedFingerprint(schemeKey, entry.semesterId, entry.fingerprint);
+            : resolveSharedFingerprint(schemeKey, entry.semesterId, entry.fingerprint));
           if (!found) {
             if (entry.grade) skipped++;
             return;
           }
-          if (found.optionIndex >= 0) {
-            state.selections[schemeKey][keyFor(found.semesterId, found.index)] = found.optionIndex;
-          }
+          const key = keyFor(found.semesterId, found.index);
+          if (found.optionIndex >= 0) target.selections[schemeKey][key] = found.optionIndex;
           if (entry.grade) {
             if (!found.subject.audit && allowedGrades(schemeKey).includes(entry.grade)) {
-              setStoredGrade(schemeKey, found.semesterId, found.index, entry.grade);
+              target.grades[schemeKey][key] = entry.grade;
             } else {
               skipped++;
             }
@@ -4311,11 +4936,11 @@
 
         const requested = Number(data.activeSemester);
         const exists = CURRICULA[schemeKey].semesters.some(semester => semester.id === requested);
-        state.activeSemester[schemeKey] = exists ? requested : CURRICULA[schemeKey].semesters[0].id;
+        target.activeSemester[schemeKey] = exists ? requested : firstSemesterId(schemeKey);
       });
 
-      if (CURRICULA[shared.activeScheme]) state.activeScheme = shared.activeScheme;
-      else if (!CURRICULA[state.activeScheme]) state.activeScheme = Object.keys(CURRICULA)[0];
+      if (CURRICULA[shared.activeScheme]) target.activeScheme = shared.activeScheme;
+      else if (!CURRICULA[target.activeScheme]) target.activeScheme = DEFAULT_SCHEME;
 
       shared.skipped = skipped;
       return true;
@@ -4371,29 +4996,43 @@
     // ---------------------------------------------------------------------
     // A4 calculated grade report
     // ---------------------------------------------------------------------
-    const REPORT_SEMESTER_WORDS = {
-      1: "FIRST",
-      2: "SECOND",
-      3: "THIRD",
-      4: "FOURTH",
-      5: "FIFTH",
-      6: "SIXTH",
-      7: "SEVENTH",
-      8: "EIGHTH"
-    };
+    // Semester number -> word on the marksheet; beyond the list it prints "SEMESTER n".
+    const REPORT_SEMESTER_WORDS = Object.fromEntries([
+      "FIRST", "SECOND", "THIRD", "FOURTH", "FIFTH", "SIXTH",
+      "SEVENTH", "EIGHTH", "NINTH", "TENTH", "ELEVENTH", "TWELFTH"
+    ].map((word, index) => [index + 1, word]));
 
+    // Two semesters per year, capped at the last year in YEAR_OPTIONS.
     function defaultYearForSemester(semesterId) {
-      if (semesterId <= 2) return "FIRST";
-      if (semesterId <= 4) return "SECOND";
-      if (semesterId <= 6) return "THIRD";
-      return "FOURTH";
+      const yearIndex = Math.min(YEAR_OPTIONS.length, Math.max(1, Math.ceil(Number(semesterId) / 2))) - 1;
+      return YEAR_OPTIONS[yearIndex][0];
     }
 
+    let reportYearEdited = false;
+    // Semester being exported from the marksheet dialog (null = the semester chosen in Student Details).
+    let reportSemesterOverride = null;
+    // Purpose chosen in the dialog; printed on the marksheet as the Remark.
+    let reportPurpose = "";
+
     function reportSemesterObject() {
-      const semesterId = Number(document.getElementById("report-semester").value);
+      const semesterId = reportSemesterOverride !== null
+        ? reportSemesterOverride
+        : Number(document.getElementById("report-semester").value);
       return CURRICULA[state.activeScheme].semesters.find(
         semester => semester.id === semesterId
       ) || getSemester();
+    }
+
+    // Year printed on the marksheet: the Year field for the semester chosen in Student
+    // Details, otherwise the normal year for that semester.
+    function reportYearFor(semester) {
+      const selectedId = Number(document.getElementById("report-semester").value);
+      const selectedYear = String(document.getElementById("report-year").value || "");
+      return semester.id === selectedId && selectedYear ? selectedYear : defaultYearForSemester(semester.id);
+    }
+
+    function reportPurposeRemark() {
+      return reportPurpose ? `Remark: Issued for the purpose of ${reportPurpose}.` : "";
     }
 
     function resolvedReportSubject(schemeKey, semester, subject, index) {
@@ -4416,8 +5055,6 @@
         grade: getStoredGrade(schemeKey, semester.id, index)
       };
     }
-
-    let reportYearEdited = false;
 
     // ---------------------------------------------------------------------
     // Custom dropdown (listbox) used for Examination, Semester and Year.
@@ -4889,6 +5526,16 @@
         scheduleGradeReportRender();
         updateReportActionState();
       });
+
+      // Purpose (printed as the Remark on the marksheet).
+      document.querySelectorAll('input[name="report-purpose"]').forEach(radio => {
+        radio.addEventListener("change", () => {
+          if (!radio.checked) return;
+          reportPurpose = radio.value;
+          scheduleGradeReportRender();
+          updateReportActionState();
+        });
+      });
     }
 
     // Keeps the Semester field on the active semester, and Year on its default unless edited.
@@ -4943,18 +5590,31 @@
 
     function updateReportActionState() {
       const missing = missingReportFields();
-      const blocked = reportExportBusy || missing.length > 0;
-      ["save-grade-report-pdf", "save-grade-report-jpg"].forEach(id => {
-        document.getElementById(id).disabled = blocked;
+
+      // Per-semester PDF / JPG / View buttons (and the viewer's PDF / JPG) need
+      // every detail plus a purpose.
+      const blocked = reportExportBusy || missing.length > 0 || !reportPurpose;
+      document.querySelectorAll(".sem-export-btn").forEach(button => {
+        button.disabled = blocked;
       });
 
-      // The Grade Report PDF button stays disabled until every detail is filled in.
+      const purposeHint = document.getElementById("report-purpose-hint");
+      if (purposeHint) {
+        const text = reportPurpose
+          ? `Printed below the table as: ${reportPurposeRemark()}`
+          : "Select a purpose to enable PDF, JPG and View.";
+        if (purposeHint.textContent !== text) purposeHint.textContent = text;
+      }
+
+      // The Provisional Marksheet button stays disabled until every detail is filled in.
       const openButton = document.getElementById("open-grade-report");
       openButton.disabled = missing.length > 0;
       openButton.title = missing.length ? `Fill in ${missing.join(", ")} first` : "";
 
       const hint = document.getElementById("report-required-hint");
-      const hintText = missing.length ? `Fill in ${missing.join(", ")} to enable Grade Report PDF.` : "";
+      const hintText = missing.length && isAdminMode()
+        ? `Fill in ${missing.join(", ")} to enable Provisional Marksheet.`
+        : "";
       if (hint.textContent !== hintText) hint.textContent = hintText;
 
       // Red outline only after the user has interacted with a field.
@@ -4999,7 +5659,7 @@
       );
       setReportText(
         "pdf-year",
-        document.getElementById("report-year").value.toUpperCase(),
+        reportYearFor(semester).toUpperCase(),
         "-"
       );
       setReportText(
@@ -5054,18 +5714,11 @@
           ? cumResult.cgpa.toFixed(2)
           : "-";
 
+      // Remark below the table: the purpose chosen in the dialog.
       const remark = document.getElementById("pdf-remark");
-
-      if (!semResult.complete) {
-        remark.textContent = "Remark: Some subject grades are not entered; SGPA is therefore not calculated.";
-        remark.style.display = "block";
-      } else if (semResult.hasFail) {
-        remark.textContent = "Remark: An FF grade is present in the entered semester data.";
-        remark.style.display = "block";
-      } else {
-        remark.textContent = "";
-        remark.style.display = "none";
-      }
+      const remarkText = reportPurposeRemark();
+      remark.textContent = remarkText;
+      remark.style.display = remarkText ? "block" : "none";
 
       if (reportPreviewWanted) fitReportPreview();
     }
@@ -5137,9 +5790,85 @@
       });
     }
 
+    // Renders the hidden report for one semester while `task` runs, then restores
+    // the semester chosen in Student Details (used by Ctrl+P printing).
+    async function withReportSemester(semesterId, task) {
+      reportSemesterOverride = semesterId;
+      try {
+        renderGradeReport();
+        return await task();
+      } finally {
+        reportSemesterOverride = null;
+        renderGradeReport();
+      }
+    }
+
+    // One card per completely filled semester, each with PDF / JPG / View.
+    function renderReportSemesterList() {
+      const list = document.getElementById("report-semester-list");
+      const schemeKey = state.activeScheme;
+      const filled = filledSemesters(schemeKey);
+
+      if (!filled.length) {
+        list.innerHTML = `<div class="sem-empty">No semester is completely filled yet. Enter every grade of a semester and it will appear here.</div>`;
+        updateReportActionState();
+        return;
+      }
+
+      list.innerHTML = filled.map(semester => {
+        const result = semesterState(schemeKey, semester);
+        const cumulative = cumulativeState(schemeKey, semester.id);
+        const sgpa = result.sgpa !== null ? result.sgpa.toFixed(2) : "—";
+        const cgpa = cumulative.cgpa !== null ? cumulative.cgpa.toFixed(2) : "—";
+        const id = semester.id;
+        return `
+          <div class="sem-card" role="group" aria-label="Semester ${id}">
+            <span class="sem-chip">Semester ${id}</span>
+            <div class="sem-card-meta">SGPA ${sgpa} &nbsp;|&nbsp; CGPA ${cgpa}</div>
+            <div class="sem-card-actions">
+              <button type="button" class="sem-export-btn is-primary" data-action="pdf" data-semester="${id}"
+                      aria-label="Download Semester ${id} as PDF">PDF</button>
+              <button type="button" class="sem-export-btn" data-action="jpg" data-semester="${id}"
+                      aria-label="Download Semester ${id} as JPG">JPG</button>
+              <button type="button" class="sem-export-btn" data-action="view" data-semester="${id}"
+                      aria-label="View Semester ${id}">View</button>
+            </div>
+          </div>`;
+      }).join("");
+
+      updateReportActionState();
+    }
+
     let reportReturnFocus = null;
 
+    // ---- Admin mode -------------------------------------------------------------
+    // The Provisional Marksheet tools appear only when the address has "admin" in its
+    // # part: page.html#admin, or a student's share link with &admin added at the end.
+    // Share links made on this page never include it.
+    function isAdminMode() {
+      const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      return [...params.keys()].some(key => key.trim().toLowerCase() === "admin");
+    }
+
+    function applyAdminMode() {
+      const admin = isAdminMode();
+      document.body.classList.toggle("is-admin", admin);
+      document.getElementById("open-grade-report").hidden = !admin;
+      if (admin) {
+        // Prepare fonts and the PDF library in the background (admins only).
+        ensureReportWebFonts(8000);
+        warmUpPdfExport();
+      } else {
+        closeGradeReport();
+      }
+      updateReportActionState();
+    }
+
+    // Typing or removing #admin in the address bar takes effect without a reload.
+    window.addEventListener("hashchange", applyAdminMode);
+
     function openGradeReport() {
+      if (!isAdminMode()) return;
       const overlay = document.getElementById("report-overlay");
       clearTimeout(reportCloseTimer); // reopened while the close animation was playing
       overlay.classList.remove("is-closing");
@@ -5157,20 +5886,24 @@
       CustomSelect.instances.forEach(select => select.close({ instant: true }));
       syncReportFields();
       hideSnackbar();
+      closeReportViewer({ focus: false });
       overlay.classList.add("open");
       overlay.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
       renderGradeReport();
-      updateReportActionState();
+      renderReportSemesterList();
 
-      // Short confirmation of what will be downloaded.
+      // Short confirmation of who the marksheet is for.
       const value = id => String(document.getElementById(id).value || "").trim();
       document.getElementById("report-download-summary").innerHTML =
-        `<strong>${escapeHtml(value("report-student-name"))}</strong> · PRN ${escapeHtml(value("report-prn"))}<br>` +
-        `Semester ${escapeHtml(value("report-semester"))} · ${escapeHtml(value("report-examination"))}`;
-      document.getElementById("save-grade-report-pdf").focus();
+        `<strong>${escapeHtml(value("report-student-name"))}</strong> &nbsp;|&nbsp; PRN ${escapeHtml(value("report-prn"))}<br>` +
+        `${escapeHtml(value("report-examination"))}`;
 
-      // Prepare the PDF fonts/libraries while the user fills in the details.
+      const firstExport = document.querySelector("#report-semester-list .sem-export-btn:not(:disabled)");
+      const checkedPurpose = document.querySelector('input[name="report-purpose"]:checked');
+      (firstExport || checkedPurpose || document.querySelector('input[name="report-purpose"]')).focus();
+
+      // Prepare the PDF fonts/libraries in the background.
       warmUpPdfExport();
     }
 
@@ -5183,6 +5916,7 @@
       // Play the close animation, then hide.
       const finish = () => {
         overlay.classList.remove("open", "is-closing");
+        closeReportViewer({ focus: false });
       };
       if (motionOn()) {
         overlay.classList.add("is-closing");
@@ -5198,6 +5932,226 @@
       reportReturnFocus = null;
     }
 
+    // ---- In-dialog viewer ("View" button) ------------------------------------
+    let reportViewSemesterId = null;
+
+    // ---- Preview watermark ------------------------------------------------------
+    // Only the "View" preview is watermarked; PDF/JPG downloads are unchanged.
+    // Several layers make it hard to remove cleanly:
+    //   • personalised text (name, PRN, date/time, a random preview ID) so a leaked copy is traceable;
+    //   • two crossing diagonal text grids in different colours, over every line of content;
+    //   • wavy guilloche lines and dark hairlines through the text, so colour/brightness
+    //     filters that erase the watermark also erase the marks;
+    //   • microtext along the border, too small to retype cleanly;
+    //   • random jitter on every view, so no fixed template can be subtracted.
+    function makePreviewId() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      const bytes = new Uint8Array(8);
+      if (window.crypto && typeof window.crypto.getRandomValues === "function") window.crypto.getRandomValues(bytes);
+      else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+      const code = Array.from(bytes, byte => chars[byte % chars.length]).join("");
+      return `PV-${code.slice(0, 4)}-${code.slice(4)}`;
+    }
+
+    function previewWatermarkInfo() {
+      const value = id => String(document.getElementById(id).value || "").trim().replace(/\s+/g, " ").toUpperCase();
+      return {
+        name: value("report-student-name") || "STUDENT",
+        prn: value("report-prn") || "-",
+        time: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
+        id: makePreviewId()
+      };
+    }
+
+    function paintPreviewWatermark(ctx, W, H, mark) {
+      const rand = Math.random;
+      ctx.save();
+
+      // 1) Guilloche: wavy lines across the whole page (every third one red).
+      const waves = 26;
+      for (let i = 0; i < waves; i++) {
+        const baseY = (H / waves) * (i + 0.5) + (rand() - 0.5) * 24;
+        const amp = 16 + rand() * 28;
+        const freq = (2 + rand() * 3) * Math.PI * 2 / W;
+        const phase = rand() * Math.PI * 2;
+        ctx.lineWidth = 1.1;
+        ctx.strokeStyle = i % 3 === 0 ? "rgba(190, 0, 0, 0.22)" : "rgba(0, 0, 0, 0.13)";
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 6) {
+          const y = baseY + amp * Math.sin(x * freq + phase) + amp * 0.4 * Math.sin(x * freq * 2.7 + phase * 1.3);
+          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      // 2) Two crossing grids of personalised diagonal text.
+      const line = `PREVIEW ONLY • NOT VALID • ${mark.name} • PRN ${mark.prn} • ${mark.time} • ${mark.id}     `;
+      const diag = Math.hypot(W, H);
+      [[-32, "rgba(200, 0, 0, 0.17)", 110, 26], [28, "rgba(0, 0, 130, 0.11)", 150, 22]].forEach(([deg, color, step, size]) => {
+        ctx.save();
+        ctx.translate(W / 2, H / 2);
+        ctx.rotate((deg + (rand() - 0.5) * 3) * Math.PI / 180);
+        ctx.font = `normal 700 ${size}px ${REPORT_FONT_STACK}`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = color;
+        const textW = ctx.measureText(line).width;
+        for (let y = -diag / 2; y < diag / 2; y += step) {
+          const offset = rand() * textW;
+          for (let x = -diag / 2 - offset; x < diag / 2; x += textW) ctx.fillText(line, x, y);
+        }
+        ctx.restore();
+      });
+
+      // 3) Large "PREVIEW / NOT VALID" stamp across the middle.
+      ctx.save();
+      ctx.translate(W / 2 + (rand() - 0.5) * 40, H / 2 + (rand() - 0.5) * 60);
+      ctx.rotate(-Math.PI / 5 + (rand() - 0.5) * 0.05);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `normal 700 ${Math.round(W * 0.17)}px ${REPORT_FONT_STACK}`;
+      ctx.fillStyle = "rgba(200, 0, 0, 0.07)";
+      ctx.fillText("PREVIEW", 0, -W * 0.06);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(200, 0, 0, 0.35)";
+      ctx.strokeText("PREVIEW", 0, -W * 0.06);
+      ctx.font = `normal 700 ${Math.round(W * 0.045)}px ${REPORT_FONT_STACK}`;
+      ctx.fillStyle = "rgba(200, 0, 0, 0.32)";
+      ctx.fillText("NOT VALID FOR ANY PURPOSE", 0, W * 0.07);
+      ctx.restore();
+
+      // 4) Dark hairlines through the text: survive brightness/contrast "cleaning".
+      ctx.lineWidth = 0.9;
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.45)";
+      for (let i = 0; i < 7; i++) {
+        const y1 = rand() * H, y2 = y1 + (rand() - 0.5) * H * 0.6;
+        ctx.beginPath();
+        ctx.moveTo(0, y1);
+        ctx.bezierCurveTo(W * 0.33, y1 + (rand() - 0.5) * 300, W * 0.66, y2 + (rand() - 0.5) * 300, W, y2);
+        ctx.stroke();
+      }
+
+      // 5) Microtext just outside the page border on all four sides.
+      const micro = `PREVIEW ${mark.id} PRN ${mark.prn} ${mark.name} `;
+      ctx.font = `normal 400 9px ${REPORT_FONT_STACK}`;
+      ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      const edge = safeMm(10);
+      const microW = Math.max(40, ctx.measureText(micro).width);
+      for (let x = edge; x < W - edge; x += microW) {
+        ctx.fillText(micro, x, edge - 4);
+        ctx.fillText(micro, x, H - edge + 12);
+      }
+      [[edge - 4, -Math.PI / 2], [W - edge + 4, Math.PI / 2]].forEach(([x, angle]) => {
+        ctx.save();
+        ctx.translate(x, H / 2);
+        ctx.rotate(angle);
+        for (let p = -(H / 2 - edge); p < H / 2 - edge; p += microW) ctx.fillText(micro, p, 0);
+        ctx.restore();
+      });
+
+      ctx.restore();
+    }
+
+    // Same render as the downloads, with the watermark drawn on top.
+    function drawWatermarkedPreviewCanvas(model, pixelScale, mark) {
+      const canvas = drawSafeGradeReportCanvas(model, pixelScale);
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(pixelScale, 0, 0, pixelScale, 0, 0);
+      paintPreviewWatermark(ctx, SAFE_EXPORT_WIDTH, SAFE_EXPORT_HEIGHT, mark);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      return canvas;
+    }
+
+    // Writes a simple full-width page into the preview tab (pinch-zoom works on phones).
+    function writePreviewTab(win, title, bodyHtml) {
+      win.document.open();
+      win.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<style>
+  html, body { margin: 0; background: #e7e8eb; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 10px; }
+  img { display: block; width: 100%; height: auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.15);
+        pointer-events: none; -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
+  body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .msg { padding: 40px 16px; text-align: center; color: #4b5563; font-size: 15px; }
+</style></head><body oncontextmenu="return false" ondragstart="return false"><div class="wrap">${bodyHtml}</div></body></html>`);
+      win.document.close();
+    }
+
+    async function viewGradeReport(semesterId) {
+      if (!reportDetailsReady()) return;
+
+      // Open the tab right away (still inside the click), otherwise pop-up blockers stop it.
+      const title = `Semester ${semesterId} – Provisional Marksheet`;
+      let previewTab = null;
+      try { previewTab = window.open("", "_blank"); } catch { previewTab = null; }
+      if (previewTab) writePreviewTab(previewTab, title, `<div class="msg">Preparing preview…</div>`);
+
+      await ensureReportWebFonts();
+
+      let rendered;
+      try {
+        // 300 DPI so the text stays sharp when zoomed in on a phone.
+        const mark = previewWatermarkInfo();
+        rendered = await withReportSemester(semesterId, async () =>
+          drawWatermarkedPreviewCanvas(getSafeExportModel(), JPG_EXPORT_DPI / SAFE_EXPORT_DPI, mark));
+      } catch (error) {
+        console.error(error);
+        if (previewTab && !previewTab.closed) previewTab.close();
+        showSnackbar(error?.message || "Could not render the marksheet.", true, 6000);
+        return;
+      }
+
+      if (previewTab && !previewTab.closed) {
+        try {
+          const blob = await canvasToBlob(rendered, "image/jpeg", 0.92);
+          const url = URL.createObjectURL(blob);
+          writePreviewTab(previewTab, title, `<img src="${url}" alt="${escapeHtml(title)}" draggable="false">`);
+          setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+          return;
+        } catch (error) {
+          console.error(error);
+          previewTab.close();
+        }
+      } else {
+        showSnackbar("Pop-ups are blocked, so the preview is shown here instead.", false, 4000);
+      }
+
+      // Fallback (pop-up blocked): show the preview inside the dialog.
+      const canvas = document.getElementById("report-view-canvas");
+      canvas.width = rendered.width;
+      canvas.height = rendered.height;
+      const context = canvas.getContext("2d", { alpha: false });
+      context.fillStyle = "#fff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(rendered, 0, 0);
+
+      reportViewSemesterId = semesterId;
+      document.getElementById("report-view-title").textContent = `Semester ${semesterId} preview`;
+      document.querySelector(".report-builder").classList.add("is-viewing");
+      document.getElementById("report-viewer").hidden = false;
+      document.getElementById("report-overlay").scrollTop = 0;
+      document.getElementById("report-view-back").focus();
+    }
+
+    function closeReportViewer({ focus = true } = {}) {
+      const viewer = document.getElementById("report-viewer");
+      if (viewer.hidden) return;
+      viewer.hidden = true;
+      document.querySelector(".report-builder").classList.remove("is-viewing");
+      const semesterId = reportViewSemesterId;
+      reportViewSemesterId = null;
+      if (focus) {
+        const button = document.querySelector(
+          `#report-semester-list .sem-export-btn[data-action="view"][data-semester="${semesterId}"]`
+        );
+        if (button) button.focus();
+      }
+    }
+
     function reportFilename(extension) {
       const clean = value => String(value || "")
         .trim()
@@ -5206,7 +6160,9 @@
         .replace(/^[._-]+|[._-]+$/g, "");
       const student = clean(document.getElementById("report-student-name").value);
       const prn = clean(document.getElementById("report-prn").value);
-      const semester = Number(document.getElementById("report-semester").value) || 1;
+      const semester = reportSemesterOverride !== null
+        ? reportSemesterOverride
+        : (Number(document.getElementById("report-semester").value) || 1);
 
       const base = [
         "Semester_Grade_Report",
@@ -5499,8 +6455,7 @@
       const widths = [codeW, nameW, creditW, gradeW];
       const compact = model.subjects.length >= 11;
       const headerH = t(compact ? 42 : 48);
-      ctx.fillStyle = "#eee";
-      ctx.fillRect(tableX, y, tableW, headerH);
+      // Header row: white background (no grey shading).
       ctx.fillStyle = "#000";
       let x = tableX;
       ["SUBJECT CODE", "SUBJECT NAME", "CREDITS", "GRADE"].forEach((header, i) => {
@@ -5526,7 +6481,8 @@
       y += t(compact ? 14 : 18);
       const perfH = t(compact ? 42 : 48), labelWidth = codeW, valueWidth = tableW - labelWidth;
       for (const [label, value] of [["SGPA", model.sgpa], ["CGPA", model.cgpa]]) {
-        ctx.fillStyle = "#eee"; ctx.fillRect(tableX, y, labelWidth, perfH); ctx.fillStyle = "#000";
+        // SGPA / CGPA label cells: white background (no grey shading).
+        ctx.fillStyle = "#000";
         ctx.strokeRect(tableX, y, labelWidth, perfH); ctx.strokeRect(tableX + labelWidth, y, valueWidth, perfH);
         safeDrawCell(ctx, label, tableX, y, labelWidth, perfH, { preferred: t(compact ? 19 : 21), minimum: t(16), weight: 700, align: "center", maxLines: 1 });
         safeDrawCell(ctx, value, tableX + labelWidth, y, valueWidth, perfH, { preferred: t(compact ? 19 : 21), minimum: t(16), align: "center", maxLines: 1 });
@@ -6235,95 +7191,124 @@
 
     function reportDetailsReady() {
       const missing = updateReportActionState();
-      if (!missing.length) return true;
-      REPORT_REQUIRED_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = "true"; });
-      updateReportActionState();
-      setExportBusy(false, `Please fill in: ${missing.join(", ")}.`, true);
-      return false;
-    }
-
-    async function saveGradeReportJpg() {
-      if (!reportDetailsReady()) return;
-      setExportBusy(true, `Rendering A4 JPG at ${JPG_EXPORT_DPI} DPI…`);
-
-      try {
-        const canvas = await captureGradeReportCanvas(JPG_EXPORT_DPI);
-        const jpgBlob = await withJpegDpi(await canvasToBlob(canvas, "image/jpeg", 0.95), JPG_EXPORT_DPI);
-        downloadBlob(jpgBlob, reportFilename("jpg"));
-        setExportBusy(false, `JPG downloaded (${canvas.width} × ${canvas.height} px, ${JPG_EXPORT_DPI} DPI).`);
-      } catch (error) {
-        console.error(error);
-        setExportBusy(
-          false,
-          error?.message || "Could not create the JPG.",
-          true
-        );
+      if (missing.length) {
+        REPORT_REQUIRED_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = "true"; });
+        updateReportActionState();
+        setExportBusy(false, `Please fill in: ${missing.join(", ")}.`, true);
+        return false;
       }
+      if (!reportPurpose) {
+        showSnackbar("Select the purpose first (Swadhar Yojana, Credit Calculation, Scholarship or Marksheet Preparation).", true, 5000);
+        const firstPurpose = document.querySelector('input[name="report-purpose"]');
+        if (firstPurpose) firstPurpose.focus();
+        return false;
+      }
+      return true;
     }
 
-    async function saveGradeReportPdf() {
+    async function saveGradeReportJpg(semesterId) {
       if (!reportDetailsReady()) return;
-      setExportBusy(true, pdfResourcesPromise ? "Creating A4 PDF…" : "Preparing fonts for the PDF (first time only)…");
+      setExportBusy(true, `Rendering Semester ${semesterId} JPG at ${JPG_EXPORT_DPI} DPI…`);
 
-      try {
-        renderGradeReport();
-        const pdfBlob = await buildTextPdf(getSafeExportModel());
-        downloadBlob(pdfBlob, reportFilename("pdf"));
-        setExportBusy(false, "PDF downloaded (selectable text, Carlito font embedded).");
-        return;
-      } catch (error) {
-        console.error(error);
-        if (/too tall/i.test(error?.message || "")) {
-          setExportBusy(false, error.message, true);
-          return;
+      await withReportSemester(semesterId, async () => {
+        try {
+          const canvas = await captureGradeReportCanvas(JPG_EXPORT_DPI);
+          const jpgBlob = await withJpegDpi(await canvasToBlob(canvas, "image/jpeg", 0.95), JPG_EXPORT_DPI);
+          downloadBlob(jpgBlob, reportFilename("jpg"));
+          setExportBusy(false, `Semester ${semesterId} JPG downloaded (${canvas.width} × ${canvas.height} px, ${JPG_EXPORT_DPI} DPI).`);
+        } catch (error) {
+          console.error(error);
+          setExportBusy(
+            false,
+            error?.message || "Could not create the JPG.",
+            true
+          );
         }
-        // Libraries or font could not be downloaded (e.g. offline): fall back to an image PDF.
-        setExportBusy(true, "Could not load the PDF font/library; creating an image-based PDF instead…");
-      }
+      });
+    }
 
+    async function saveGradeReportPdf(semesterId) {
+      if (!reportDetailsReady()) return;
+      setExportBusy(true, pdfResourcesPromise
+        ? `Creating Semester ${semesterId} PDF…`
+        : "Preparing fonts for the PDF (first time only)…");
+
+      await withReportSemester(semesterId, async () => {
+        try {
+          renderGradeReport();
+          const pdfBlob = await buildTextPdf(getSafeExportModel());
+          downloadBlob(pdfBlob, reportFilename("pdf"));
+          setExportBusy(false, `Semester ${semesterId} PDF downloaded.`);
+          return;
+        } catch (error) {
+          console.error(error);
+          if (/too tall/i.test(error?.message || "")) {
+            setExportBusy(false, error.message, true);
+            return;
+          }
+          // Libraries or font could not be downloaded (e.g. offline): fall back to an image PDF.
+          setExportBusy(true, "Could not load the PDF font/library; creating an image-based PDF instead…");
+        }
+
+        try {
+          const canvas = await captureGradeReportCanvas(JPG_EXPORT_DPI);
+          const jpgBlob = await canvasToBlob(canvas, "image/jpeg", 0.985);
+          const jpegBytes = new Uint8Array(await jpgBlob.arrayBuffer());
+
+          const pdfBlob = makePdfFromJpegBytes(
+            jpegBytes,
+            canvas.width,
+            canvas.height
+          );
+
+          downloadBlob(pdfBlob, reportFilename("pdf"));
+          setExportBusy(
+            false,
+            "Image-based PDF downloaded (text not selectable). Check your internet connection for a text PDF.",
+            true
+          );
+        } catch (error) {
+          console.error(error);
+          setExportBusy(
+            false,
+            error?.message || "Could not create the PDF.",
+            true
+          );
+        }
+      });
+    }
+
+    // Runs PDF / JPG / View for one semester, with a spinner on the clicked button.
+    const REPORT_ACTIONS = { pdf: saveGradeReportPdf, jpg: saveGradeReportJpg, view: viewGradeReport };
+    async function runReportAction(button, action, semesterId) {
+      const run = REPORT_ACTIONS[action];
+      if (!run || !Number.isFinite(semesterId)) return;
+      button.classList.add("is-loading");
       try {
-        const canvas = await captureGradeReportCanvas(JPG_EXPORT_DPI);
-        const jpgBlob = await canvasToBlob(canvas, "image/jpeg", 0.985);
-        const jpegBytes = new Uint8Array(await jpgBlob.arrayBuffer());
-
-        const pdfBlob = makePdfFromJpegBytes(
-          jpegBytes,
-          canvas.width,
-          canvas.height
-        );
-
-        downloadBlob(pdfBlob, reportFilename("pdf"));
-        setExportBusy(
-          false,
-          "Image-based PDF downloaded (text not selectable). Check your internet connection for a text PDF.",
-          true
-        );
-      } catch (error) {
-        console.error(error);
-        setExportBusy(
-          false,
-          error?.message || "Could not create the PDF.",
-          true
-        );
+        await run(semesterId);
+      } finally {
+        button.classList.remove("is-loading");
       }
     }
 
     document.getElementById("open-grade-report").addEventListener("click", openGradeReport);
     document.getElementById("close-grade-report").addEventListener("click", closeGradeReport);
-    // Show a spinner on the clicked export button while the file is being made.
-    const withLoadingSpinner = (buttonId, action) => async () => {
-      const button = document.getElementById(buttonId);
-      button.classList.add("is-loading");
-      try {
-        await action();
-      } finally {
-        button.classList.remove("is-loading");
-      }
-    };
-    document.getElementById("save-grade-report-pdf")
-      .addEventListener("click", withLoadingSpinner("save-grade-report-pdf", saveGradeReportPdf));
-    document.getElementById("save-grade-report-jpg")
-      .addEventListener("click", withLoadingSpinner("save-grade-report-jpg", saveGradeReportJpg));
+
+    document.getElementById("report-semester-list").addEventListener("click", event => {
+      const button = event.target.closest(".sem-export-btn");
+      if (!button || button.disabled) return;
+      runReportAction(button, button.dataset.action, Number(button.dataset.semester));
+    });
+
+    document.getElementById("report-view-back").addEventListener("click", () => closeReportViewer());
+    ["pdf", "jpg"].forEach(action => {
+      const button = document.getElementById(`report-view-${action}`);
+      button.addEventListener("click", () => {
+        if (reportViewSemesterId !== null && !button.disabled) {
+          runReportAction(button, action, reportViewSemesterId);
+        }
+      });
+    });
 
     document.getElementById("report-overlay").addEventListener("click", event => {
       if (event.target.id === "report-overlay") closeGradeReport();
@@ -6337,6 +7322,7 @@
 
     // Ctrl+P prints the report canvas; make sure it is populated and current.
     window.addEventListener("beforeprint", () => {
+      if (!isAdminMode()) return;
       syncReportFields();
       reportPreviewWanted = true;
       renderGradeReport();
@@ -6345,11 +7331,12 @@
 
     document.addEventListener("keydown", event => {
       if (
-        event.key === "Escape" &&
-        document.getElementById("report-overlay").classList.contains("open")
-      ) {
-        closeGradeReport();
-      }
+        event.key !== "Escape" ||
+        !document.getElementById("report-overlay").classList.contains("open")
+      ) return;
+      // Escape leaves the preview first, then closes the dialog.
+      if (!document.getElementById("report-viewer").hidden) closeReportViewer();
+      else closeGradeReport();
     });
 
     const shareButton = document.getElementById("copy-share-link");
@@ -6424,16 +7411,16 @@
       // Don't submit the exact same entry twice.
       const key = `${prn}|${name}|${shareUrl}`;
       if (key === lastLoggedShareKey) {
-        showSnackbar("Already submitted.");
+        showSnackbar("Already submitted to college.");
         return;
       }
 
       submitButton.disabled = true;
-      showSnackbar("Submitting…", false, 0);
+      showSnackbar("Submitting to college…", false, 0);
       try {
         await logShareToGoogleForm(shareUrl, prn, name);
         lastLoggedShareKey = key;
-        showSnackbar("Submitted.");
+        showSnackbar("Submitted to college.");
       } catch (error) {
         console.warn("Google Form submission failed:", error);
         showSnackbar("Could not submit. Check your connection and try again.", true, 5000);
@@ -6495,9 +7482,8 @@
       document.fonts.ready.then(() => positionSchemeIndicator({ instant: true }));
     }
 
-    // Load the report fonts (Google Fonts) and PDF resources in the background right away.
-    ensureReportWebFonts(8000);
-    warmUpPdfExport();
+    // Show the marksheet tools only in admin mode (also preloads PDF resources for admins).
+    applyAdminMode();
   </script>
 </body>
 </html>
