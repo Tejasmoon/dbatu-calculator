@@ -8226,15 +8226,11 @@
       clearShareParamFromUrl();
       document.getElementById("load-student").focus();
 
-      const who = `${record.name || "Student"} (PRN ${record.prn})`;
-      if (decoded.skipped) {
-        showSnackbar(
-          `Loaded ${who}. ${decoded.skipped} grade${decoded.skipped === 1 ? " was" : "s were"} for subjects no longer listed and skipped.`,
-          false, 7000
-        );
-      } else {
-        showSnackbar(`Loaded ${who}.`, false, 3500);
-      }
+      const details = decoded.details || {};
+      showSnackbar(
+        loadedDetailsMessage(details.name || record.name, details.prn || record.prn, decoded.skipped),
+        false, decoded.skipped ? 7000 : 4500
+      );
     }
 
     // ---- Delete with confirmation ---------------------------------------------------
@@ -8474,18 +8470,26 @@
 
     setupReportDetails();
 
+    // "Loaded details of AARAV DESHMUKH | PRN 2252291245123" (shared links and saved details).
+    function loadedDetailsMessage(name, prn, skipped = 0) {
+      const cleanName = cleanText(name);
+      const cleanPrn = cleanText(prn);
+      const who = [cleanName, cleanPrn ? `PRN ${cleanPrn}` : ""].filter(Boolean).join(" | ");
+      let message = who ? `Loaded details of ${who}` : "Shared details loaded.";
+      if (skipped) {
+        message += `${who ? "." : ""} ${skipped} grade${skipped === 1 ? " was" : "s were"} for subjects no longer listed and skipped.`;
+      }
+      return message;
+    }
+
     const shared = getSharedStateFromUrl();
     let sharedApplied = false;
 
     if (window.location.hash.includes("s=")) {
       sharedApplied = Boolean(shared && applyShareState(shared));
-      if (sharedApplied && shared.skipped) {
-        showSnackbar(
-          `Shared details loaded. ${shared.skipped} grade${shared.skipped === 1 ? " was" : "s were"} for subjects no longer listed and skipped.`,
-          false, 7000
-        );
-      } else if (sharedApplied) {
-        showSnackbar("Shared details loaded.", false, 4000);
+      if (sharedApplied) {
+        const details = shared.details || {};
+        showSnackbar(loadedDetailsMessage(details.name, details.prn, shared.skipped), false, shared.skipped ? 7000 : 4500);
       } else {
         showSnackbar("Invalid or incompatible share link.", true, 6000);
       }
