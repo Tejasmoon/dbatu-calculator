@@ -734,6 +734,29 @@
       letter-spacing: -.015em;
     }
 
+    /* Close icon (top-right of the marksheet dialog). */
+    .report-close-icon {
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 36px;
+      height: 36px;
+      margin: -4px -6px -4px 0;
+      padding: 0;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: #4b5563;
+      cursor: pointer;
+    }
+
+    .report-close-icon:hover { background: var(--soft); color: var(--text); }
+
+    .report-close-icon:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, .18);
+    }
+
     .report-builder-body {
       display: grid;
       grid-template-columns: 330px minmax(0, 1fr);
@@ -1158,7 +1181,6 @@
       }
 
       main.page > .header,
-      main.page > .student-details,
       main.page > .scheme-tabs,
       main.page > .summary,
       main.page > .toolbar,
@@ -1728,7 +1750,7 @@
     /* Details-only report dialog: the A4 preview is not shown on screen
        (it is still drawn for Ctrl+P printing via the print rules above). */
     @media screen {
-      .report-builder { width: min(580px, 100%); }
+      .report-builder { width: min(720px, 100%); }
       .report-builder.is-viewing { width: min(840px, 100%); }
       .report-builder-body { display: block; min-height: 0; }
       .report-controls {
@@ -1778,8 +1800,7 @@
       box-shadow: 0 0 0 3px rgba(17,24,39,.08);
     }
 
-    .exam-trigger.is-invalid,
-    #exam-other-input.is-invalid {
+    .exam-trigger.is-invalid {
       border-color: var(--danger);
       box-shadow: 0 0 0 3px rgba(180, 35, 24, .10);
     }
@@ -1834,10 +1855,11 @@
       pointer-events: auto;
     }
 
-    /* Menus moved to <body> (elective subjects): fixed, above page content. */
+    /* Menus moved to <body> (elective subjects, per-semester examinations): fixed,
+       above page content and above the marksheet dialog. */
     .exam-menu.is-portal {
       position: fixed;
-      z-index: 1000;
+      z-index: 2050;
     }
 
     /* Elective subject dropdown inside the table: compact trigger. */
@@ -1933,18 +1955,6 @@
 
     .exam-group + .exam-group { margin-top: 4px; }
 
-    /* Option labels are spans inside .report-field: undo the uppercase label styling. */
-    .report-field .exam-option > span {
-      display: block;
-      min-width: 0;
-      margin: 0;
-      color: inherit;
-      font-size: inherit;
-      font-weight: inherit;
-      text-transform: none;
-      letter-spacing: normal;
-    }
-
     .exam-option.is-active { background: var(--soft); }
 
     .exam-option[aria-selected="true"] {
@@ -1989,95 +1999,37 @@
       .exam-trigger { transition: none !important; }
     }
 
-    /* Student details card (top of the page) */
-    .student-details {
-      margin: 0 0 18px;
-      padding: 16px 18px 14px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--surface);
-    }
-
-    .student-details-head {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 4px 12px;
-      margin-bottom: 12px;
-    }
-
-    .student-details-head h2 {
-      margin: 0;
-      font-size: 16px;
-      letter-spacing: -.01em;
-    }
-
-    .student-details-head p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 12.5px;
-    }
-
-    /* Row 1: Examination | Student's Name.  Row 2: PRN | Semester | Year. */
-    .student-details-grid {
+    /* Student's Name + PRN at the top of the marksheet dialog. */
+    .report-student-grid {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      grid-template-areas:
-        "exam exam exam name name name"
-        "prn  prn  sem  sem  year year";
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
       gap: 12px 14px;
     }
 
-    .student-details-grid .report-field { margin: 0; min-width: 0; }
-    .student-details-grid .field-exam { grid-area: exam; }
-    .student-details-grid .field-name { grid-area: name; }
-    .student-details-grid .field-prn { grid-area: prn; }
-    .student-details-grid .field-semester { grid-area: sem; }
-    .student-details-grid .field-year { grid-area: year; }
-
-    @media (max-width: 900px) {
-      .student-details-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-areas: "exam exam" "name name" "prn prn" "sem year";
-      }
-    }
+    .report-student-grid .report-field { margin: 0; min-width: 0; }
 
     @media (max-width: 520px) {
-      .student-details { padding: 14px; }
-      .student-details-grid {
-        grid-template-columns: 1fr;
-        grid-template-areas: "exam" "name" "prn" "sem" "year";
-      }
+      .report-student-grid { grid-template-columns: 1fr; }
     }
 
-    .student-details .report-required-hint:empty { display: none; }
+    .report-details-hint {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+
+    .report-details-hint:empty { display: none; }
 
     .report-open-btn:disabled {
       opacity: .5;
       cursor: not-allowed;
     }
 
-    .report-download-summary {
-      margin: 0 0 14px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .report-download-summary strong { color: var(--text); }
-
-    .report-required-hint {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 12px;
-      min-height: 1em;
-    }
-
     /* ===================================================================
-       Provisional Marksheet dialog: purpose picker, per-semester cards, viewer
+       Provisional Marksheet dialog: details, purpose, per-semester cards, viewer
        =================================================================== */
-    .report-section + .report-section { margin-top: 18px; }
+    .report-controls > .report-section:not(:first-child) { margin-top: 18px; }
 
     .report-section-label {
       margin: 0 0 8px;
@@ -2182,6 +2134,20 @@
       font-variant-numeric: tabular-nums;
     }
 
+    /* Examination field inside each semester card. */
+    .sem-card .sem-exam-field { margin: 11px 0 0; }
+
+    .sem-card .sem-exam-field .exam-trigger { font-size: 13.5px; }
+
+    .sem-card-hint {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .sem-card-hint:empty { display: none; }
+
     .sem-card-actions {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2211,12 +2177,6 @@
     .sem-export-btn:not(:disabled):hover { box-shadow: 0 4px 12px rgba(17, 24, 39, .12); }
     .sem-export-btn:disabled { opacity: .45; cursor: not-allowed; }
     .sem-export-btn.is-loading:disabled { opacity: .75; cursor: wait; }
-
-    button.sem-export-btn.is-loading::before {
-      width: 10px;
-      height: 10px;
-      margin-right: 5px;
-    }
 
     .sem-empty {
       grid-column: 1 / -1;
@@ -2264,8 +2224,11 @@
       box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
       .report-semester-list { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 480px) {
       .report-view-frame { padding: 6px; }
     }
 
@@ -2509,6 +2472,210 @@
     }
 
     .report-open-btn[hidden] { display: none !important; }
+
+    /* Submission status inside the download dialog. */
+    .report-submit-status {
+      margin: 16px 0 0 !important;
+      padding: 9px 11px;
+      border-radius: 9px;
+      background: #fff8e6;
+      border: 1px solid #f3d58a;
+      color: #7a5200 !important;
+      font-size: 12.5px !important;
+      line-height: 1.4;
+    }
+    .report-submit-status.is-done { background: #ecfdf3; border-color: #a6e9c1; color: #067647 !important; }
+    .report-submit-status.is-admin { background: var(--soft); border-color: var(--line); color: var(--muted) !important; }
+    .report-submit-status:empty { display: none; }
+
+    .report-dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .report-dialog-footer .report-action-secondary { min-width: 96px; }
+
+    /* Download warning popup. */
+    .warn-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(17, 24, 39, .72);
+      overflow: auto;
+    }
+    .warn-overlay[hidden] { display: none; }
+
+    .warn-dialog {
+      width: min(460px, 100%);
+      margin: auto;
+      padding: 22px 22px 18px;
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, .3);
+    }
+
+    .warn-badge {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      margin-bottom: 12px;
+      border-radius: 50%;
+      background: #fef3f2;
+      color: var(--danger);
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .warn-dialog h2 { margin: 0; font-size: 19px; letter-spacing: -.015em; }
+    .warn-intro { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+    .warn-list {
+      display: grid;
+      gap: 10px;
+      margin: 14px 0 20px;
+      padding-left: 22px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .warn-list li::marker { font-weight: 700; }
+    .warn-list li:nth-child(2) strong { color: var(--danger); }
+
+    .warn-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+      gap: 8px;
+    }
+    .warn-accept { font-variant-numeric: tabular-nums; }
+    .report-action-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+    @media screen {
+      .warn-overlay:not([hidden]) { animation: overlayIn .2s ease both; }
+      .warn-overlay:not([hidden]) .warn-dialog { animation: dialogIn .28s var(--ease-out) both; }
+    }
+    @media print { .warn-overlay { display: none !important; } }
+
+    /* ===================================================================
+       Save / Load (this device's localStorage)
+       =================================================================== */
+    @media (max-width: 900px) {
+      /* Save and Load share one row under Provisional Marksheet. */
+      .share-area .report-open-btn.store-btn { grid-column: auto; }
+    }
+
+    .report-dialog-footer { gap: 8px; }
+    .report-dialog-footer #report-save-student { margin-right: auto; }
+
+    .store-dialog { width: min(520px, 100%); }
+
+    .store-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .store-list {
+      display: grid;
+      gap: 6px;
+      max-height: min(420px, 55vh);
+      margin: 14px 0 16px;
+      padding: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      list-style: none;
+    }
+
+    .store-item {
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
+    }
+
+    .store-open {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: block;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .store-open:hover { border-color: #9ca3af; background: #fafafa; }
+
+    .store-open:focus-visible,
+    .store-delete:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, .18);
+    }
+
+    .store-name {
+      display: block;
+      overflow: hidden;
+      font-size: 14px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .store-meta {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .store-meta strong { color: var(--text); font-weight: 650; }
+
+    .store-delete {
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: #6b7280;
+      cursor: pointer;
+    }
+
+    .store-delete:hover { border-color: #f3b4ae; background: #fef3f2; color: var(--danger); }
+
+    .store-empty {
+      padding: 18px 14px;
+      border: 1px dashed #d1d5db;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .store-footer { display: flex; justify-content: flex-end; }
+    .store-footer .report-action-secondary { min-width: 96px; }
+
+    /* Delete confirmation sits above the saved-students popup. */
+    .confirm-overlay { z-index: 2200; }
+    .confirm-text { margin: 6px 0 20px !important; line-height: 1.45; }
+
+    .report-action-primary.is-danger {
+      border-color: var(--danger);
+      background: var(--danger);
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -2526,97 +2693,6 @@
       </div>
       <p>B.Tech. Computer Science and Engineering</p>
     </header>
-
-    <section class="student-details" aria-labelledby="student-details-title">
-      <div class="student-details-head">
-        <h2 id="student-details-title">Student Details</h2>
-        <p>Included in share links and in your submission to the college.</p>
-      </div>
-      <div class="student-details-grid">
-            <div class="report-field exam-field field-exam">
-              <span id="exam-label">Examination <em class="req" aria-hidden="true">*</em></span>
-              <!-- Holds the final exam name (chosen from the list or typed under "Other"). -->
-              <input type="hidden" id="report-examination" value="">
-
-              <div class="exam-select">
-                <button type="button" class="exam-trigger" id="exam-trigger"
-                        aria-haspopup="listbox" aria-expanded="false" aria-controls="exam-listbox"
-                        aria-labelledby="exam-label exam-trigger-text">
-                  <span class="exam-trigger-text is-placeholder" id="exam-trigger-text">Select examination</span>
-                  <svg class="exam-chevron" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-                    <path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8"
-                          stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-
-                <div class="exam-menu" id="exam-menu" hidden>
-                  <div class="exam-listbox" id="exam-listbox" role="listbox" tabindex="-1"
-                       aria-labelledby="exam-label"></div>
-                </div>
-              </div>
-
-              <div class="exam-other" id="exam-other" aria-hidden="true">
-                <div class="exam-other-inner">
-                  <input type="text" id="exam-other-input" maxlength="100" autocomplete="off"
-                         placeholder="Type the examination name" aria-label="Examination name (other)" tabindex="-1">
-                </div>
-              </div>
-            </div>
-
-            <label class="report-field field-name">
-              <span>Student's Name <em class="req" aria-hidden="true">*</em></span>
-              <input id="report-student-name" type="text" value="" autocomplete="name" maxlength="90"
-                     placeholder="Full name as on records" required>
-            </label>
-
-            <label class="report-field field-prn">
-              <span>PRN <em class="req" aria-hidden="true">*</em></span>
-              <input id="report-prn" type="text" value="" autocomplete="off" maxlength="24"
-                     spellcheck="false" placeholder="Enter your PRN" required>
-            </label>
-
-            <div class="report-field field-semester">
-              <span id="semester-label">Semester <em class="req" aria-hidden="true">*</em></span>
-              <input type="hidden" id="report-semester" value="">
-              <div class="exam-select">
-                <button type="button" class="exam-trigger" id="semester-trigger"
-                        aria-haspopup="listbox" aria-expanded="false" aria-controls="semester-listbox"
-                        aria-labelledby="semester-label semester-trigger-text">
-                  <span class="exam-trigger-text is-placeholder" id="semester-trigger-text">Select semester</span>
-                  <svg class="exam-chevron" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-                    <path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8"
-                          stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-                <div class="exam-menu" id="semester-menu" hidden>
-                  <div class="exam-listbox" id="semester-listbox" role="listbox" tabindex="-1"
-                       aria-labelledby="semester-label"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="report-field field-year">
-              <span id="year-label">Year <em class="req" aria-hidden="true">*</em></span>
-              <input type="hidden" id="report-year" value="">
-              <div class="exam-select">
-                <button type="button" class="exam-trigger" id="year-trigger"
-                        aria-haspopup="listbox" aria-expanded="false" aria-controls="year-listbox"
-                        aria-labelledby="year-label year-trigger-text">
-                  <span class="exam-trigger-text is-placeholder" id="year-trigger-text">Select year</span>
-                  <svg class="exam-chevron" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-                    <path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8"
-                          stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-                <div class="exam-menu" id="year-menu" hidden>
-                  <div class="exam-listbox" id="year-listbox" role="listbox" tabindex="-1"
-                       aria-labelledby="year-label"></div>
-                </div>
-              </div>
-            </div>
-      </div>
-      <div class="report-required-hint" id="report-required-hint" aria-live="polite"></div>
-    </section>
 
     <!-- Tabs are generated from CURRICULA (one per scheme). -->
     <div class="scheme-tabs" id="scheme-tabs" aria-label="Curriculum scheme"></div>
@@ -2647,8 +2723,12 @@
     <div class="toolbar">
       <nav class="semester-tabs" id="semester-tabs" aria-label="Semester navigation"></nav>
       <div class="share-area">
-        <button class="report-open-btn" id="open-grade-report" type="button" disabled hidden>Provisional Marksheet</button>
-        <button class="share-btn" id="copy-share-link" type="button">Copy Share Link</button>
+        <button class="report-open-btn" id="open-grade-report" type="button">Provisional Marksheet</button>
+        <button class="report-open-btn store-btn" id="save-student" type="button"
+                title="Save this student's details on this device">Save</button>
+        <button class="report-open-btn store-btn" id="load-student" type="button"
+                title="Open details saved on this device">Load</button>
+        <button class="share-btn" id="copy-share-link" type="button">Copy Link</button>
         <button class="share-btn" id="submit-share-link" type="button">Submit to College</button>
       </div>
     </div>
@@ -2659,12 +2739,34 @@
       <div class="report-builder" role="dialog" aria-modal="true" aria-labelledby="report-builder-title">
         <div class="report-builder-head">
           <h2 id="report-builder-title">Provisional Marksheet</h2>
-          <button class="report-action-secondary" id="close-grade-report" type="button">Close</button>
+          <button class="report-close-icon" id="close-grade-report" type="button" aria-label="Close" title="Close">
+            <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+              <path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
 
         <div class="report-builder-body">
           <aside class="report-controls" id="report-controls">
-            <p class="report-download-summary" id="report-download-summary"></p>
+            <!-- Student details: printed on every marksheet and included in share links. -->
+            <div class="report-section">
+              <div class="report-student-grid">
+                <label class="report-field">
+                  <span>Student's Name <em class="req" aria-hidden="true">*</em></span>
+                  <input id="report-student-name" type="text" value="" autocomplete="name" maxlength="90"
+                         placeholder="Full name as on records" required>
+                </label>
+
+                <label class="report-field">
+                  <span>PRN <em class="req" aria-hidden="true">*</em></span>
+                  <input id="report-prn" type="text" value="" autocomplete="off" maxlength="24"
+                         spellcheck="false" placeholder="Enter your PRN" required>
+                </label>
+              </div>
+              <div class="report-details-hint" id="report-details-hint" aria-live="polite"></div>
+            </div>
+
+            <p class="report-submit-status" id="report-submit-status" aria-live="polite"></p>
 
             <div class="report-section">
               <div class="report-section-label" id="report-purpose-label">Purpose <em class="req" aria-hidden="true">*</em></div>
@@ -2692,6 +2794,11 @@
             <div class="report-section">
               <div class="report-section-label">Semesters</div>
               <div class="report-semester-list" id="report-semester-list"></div>
+            </div>
+
+            <div class="report-dialog-footer">
+              <button class="report-action-secondary" id="report-save-student" type="button">Save details</button>
+              <button class="report-action-secondary" id="report-footer-close" type="button">Close</button>
             </div>
           </aside>
 
@@ -2793,6 +2900,57 @@
 
   </main>
 
+  <div class="warn-overlay" id="download-warning" aria-hidden="true" hidden>
+    <div class="warn-dialog" role="alertdialog" aria-modal="true"
+         aria-labelledby="download-warning-title" aria-describedby="download-warning-list">
+      <div class="warn-badge" aria-hidden="true">!</div>
+      <h2 id="download-warning-title">Before you download</h2>
+      <p class="warn-intro">Please read carefully:</p>
+      <ol class="warn-list" id="download-warning-list">
+        <li><strong>Ensure all the grades are correctly entered.</strong></li>
+        <li>You will be <strong>responsible for your own loss</strong> if any grades are incorrectly entered.</li>
+        <li>Saving as <strong>PDF or JPG will automatically submit</strong> your grades to the college.</li>
+      </ol>
+      <div class="warn-actions">
+        <button class="report-action-secondary" id="download-warning-cancel" type="button">Cancel</button>
+        <button class="report-action-primary warn-accept" id="download-warning-accept" type="button" disabled>I understand (15)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved students (localStorage on this device) -->
+  <div class="warn-overlay store-overlay" id="load-dialog" aria-hidden="true" hidden>
+    <div class="warn-dialog store-dialog" role="dialog" aria-modal="true"
+         aria-labelledby="load-dialog-title" aria-describedby="load-dialog-intro">
+      <div class="store-head">
+        <h2 id="load-dialog-title">Load saved details</h2>
+        <button class="report-close-icon" id="load-dialog-close" type="button" aria-label="Close" title="Close">
+          <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+            <path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <p class="warn-intro" id="load-dialog-intro">Select a student to open their details.</p>
+      <ul class="store-list" id="store-list"></ul>
+      <div class="store-footer">
+        <button class="report-action-secondary" id="load-dialog-cancel" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-overlay confirm-overlay" id="delete-confirm" aria-hidden="true" hidden>
+    <div class="warn-dialog" role="alertdialog" aria-modal="true"
+         aria-labelledby="delete-confirm-title" aria-describedby="delete-confirm-text">
+      <div class="warn-badge" aria-hidden="true">!</div>
+      <h2 id="delete-confirm-title">Delete saved details?</h2>
+      <p class="warn-intro confirm-text" id="delete-confirm-text"></p>
+      <div class="warn-actions">
+        <button class="report-action-secondary" id="delete-confirm-cancel" type="button">Cancel</button>
+        <button class="report-action-primary is-danger" id="delete-confirm-accept" type="button">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
 
   <script>
@@ -2829,6 +2987,16 @@
       EE: 5,
       FF: 0
     });
+
+    // SGPA/CGPA to two decimals with normal mathematical rounding: look only at the exact
+    // value; below the halfway point rounds down, halfway or above rounds up.
+    //   8.124 -> 8.12    8.125 -> 8.13    8.9545 -> 8.95 (never rounded in steps)
+    // The tiny 1e-6 nudge absorbs binary floating-point error so exact halves go up
+    // (plain toFixed(2) would turn 5.175 into 5.17). Verified against exact fractions for
+    // every possible grade-point/credit combination up to 400 credits.
+    function formatGpa(value) {
+      return (Math.round(value * 100 + 1e-6) / 100).toFixed(2);
+    }
 
     const BASE_GRADES = ["EX","AA","AB","BB","BC","CC","CD","DD","DE","EE","FF"];
     const NON_NEP_GRADES = [...BASE_GRADES];
@@ -3041,11 +3209,18 @@
         activeScheme: DEFAULT_SCHEME,
         activeSemester: perScheme(firstSemesterId),
         grades: perScheme(() => ({})),
-        selections: perScheme(() => ({}))
+        selections: perScheme(() => ({})),
+        // Examination name per semester: exams[scheme][semesterId] = "Winter Semester Examinations 2025"
+        exams: perScheme(() => ({}))
       };
     }
 
     const state = blankSchemeState();
+
+    // Session flags kept only in memory (never in localStorage); a page refresh resets them.
+    let downloadWarningAcknowledged = false; // the download warning was accepted this session
+    let lastSubmittedKey = null;             // exact grades + details last submitted to college
+    let submitInFlight = false;              // a submission is being sent right now
 
     function keyFor(semesterId, subjectIndex) {
       return `${semesterId}:${subjectIndex}`;
@@ -3079,6 +3254,17 @@
       const key = keyFor(semesterId, subjectIndex);
       if (value) state.grades[schemeKey][key] = value;
       else delete state.grades[schemeKey][key];
+    }
+
+    // Single-line, trimmed text (examination names, PRN, name).
+    function cleanText(value) {
+      return String(value || "").trim().replace(/\s+/g, " ");
+    }
+
+    // Examination name chosen for one semester ("" when not chosen yet).
+    function getSemesterExam(schemeKey, semesterId, target = state) {
+      const exams = target.exams && target.exams[schemeKey];
+      return (exams && exams[semesterId]) || "";
     }
 
     function clampElectiveIndex(subject, value) {
@@ -3296,6 +3482,7 @@
           onSelect: value => {
             const chosen = clampElectiveIndex(subject, value);
             state.selections[schemeKey][keyFor(semester.id, index)] = chosen;
+            refreshSubmitState();
             const option = subject.options[chosen];
 
             // Subject code updates instantly (no animation).
@@ -3499,6 +3686,7 @@
 
       // Website-only indicator; the PDF/JPG report never mentions it.
       setBadgeVisible(isDirectSecondYear(schemeKey));
+      refreshSubmitState(); // a changed grade makes "Submit to College" available again
 
       setAnimatedText("summary-sem-credits", result.credits);
       setAnimatedText("grade-progress", `${result.entered} of ${result.total} valid grades entered`);
@@ -3524,7 +3712,7 @@
           setAnimatedText("semester-result", "SGPA: Not awarded (FF)");
           document.getElementById("semester-result").classList.add("error");
         } else {
-          const sgpa = result.sgpa.toFixed(2);
+          const sgpa = formatGpa(result.sgpa);
           setAnimatedText("summary-sgpa", sgpa);
           setAnimatedText("summary-sgpa-status", `${result.credits} credits · ${result.gradePoints.toFixed(2)} grade points`);
           document.getElementById("summary-sgpa-status").classList.remove("error");
@@ -3538,11 +3726,11 @@
 
       if (cumulative.cgpa !== null) {
         cgpaStatus.classList.remove("error");
-        setAnimatedText("summary-cgpa", cumulative.cgpa.toFixed(2));
+        setAnimatedText("summary-cgpa", formatGpa(cumulative.cgpa));
         setAnimatedText("summary-cgpa-status", `${cumulative.credits} credits · ${cumulative.gradePoints.toFixed(2)} grade points`);
         setAnimatedText("metric-overall-credits", cumulative.credits);
         setAnimatedText("metric-overall-gp", cumulative.gradePoints.toFixed(2));
-        setAnimatedText("metric-cgpa", cumulative.cgpa.toFixed(2));
+        setAnimatedText("metric-cgpa", formatGpa(cumulative.cgpa));
       } else {
         setAnimatedText("summary-cgpa", "—");
         if (cumulative.reason === "fail") {
@@ -3727,10 +3915,7 @@
     renderSchemeTabs();
 
     // ---------------------------------------------------------------------
-    // Shareable state: compact numeric state -> XOR obfuscation -> Base64URL
-    // ---------------------------------------------------------------------
-    // ---------------------------------------------------------------------
-    // Share-link codec (format v4): multi-pass obfuscation of the payload.
+    // Share-link codec (format v4+): multi-pass obfuscation of the payload.
     // This is obfuscation, not encryption: it keeps the data unreadable and
     // tamper-evident in the URL, but the page itself can always decode it.
     // ---------------------------------------------------------------------
@@ -3898,6 +4083,10 @@
     //   v6            3 bytes per grade (20-bit code fingerprint + grade).
     //   v5            Codes as text.   v3 / v4  Positional, read via LEGACY_LAYOUT.
     //
+    // Section tag 5 (added to v6 and v7 links): one Examination name per semester.
+    // Older links carry a single Examination in the details section; it is applied
+    // to the semester that was open when that link was made.
+    //
     // RULES FOR EDITING THE CURRICULUM LATER
     //   • Add subjects, elective options, semesters and schemes freely, anywhere
     //     in the lists (order does not matter).
@@ -4063,7 +4252,7 @@
       return bySemester;
     }
 
-    // ---- v6 (current) --------------------------------------------------------------
+    // ---- v6 --------------------------------------------------------------------
     // Each graded subject is 3 bytes: a 20-bit fingerprint of its subject code plus a
     // 4-bit grade. Grades stay tied to subject codes (not positions), so links survive
     // curriculum changes, but are ~4x shorter than v5.
@@ -4076,6 +4265,7 @@
     //   tag 3  details: u8 flags, then as flagged:
     //          exam listed (2 bytes: pattern<<4|season, year-2000) or exam text (vstr),
     //          prn vstr, name vstr, year (u8 table index, 255 = followed by vstr)
+    //   tag 5  per-semester examinations (see TAG_SEMESTER_EXAMS)
     //   schemeRef = u8 index into V6_SCHEMES, or 255 followed by vstr key.
     //
     // APPEND-ONLY tables (never reorder or remove entries):
@@ -4150,6 +4340,60 @@
       return null;
     }
 
+    // Reverse of encodeListedExam: (pattern<<4|season, year-2000) -> name ("" if unknown).
+    function decodeListedExam(code, yearByte) {
+      const pattern = V6_EXAM_PATTERNS[code >> 4];
+      const season = V6_EXAM_SEASONS[code & 0xF];
+      if (!pattern || !season) return "";
+      return pattern.replace("{season}", season).replace("{year}", String(2000 + yearByte));
+    }
+
+    // ---- Section tag 5: Examination name per semester --------------------------------
+    // Payload: schemeRef, then until the end of the section:
+    //   semesterId varint, kind u8 (1 = listed: 2 bytes as in tag 3, 2 = text: vstr).
+    // One section per scheme that has at least one examination chosen.
+    const TAG_SEMESTER_EXAMS = 5;
+    const EXAM_KIND_LISTED = 1, EXAM_KIND_TEXT = 2;
+
+    function pushSemesterExamSections(pushSection) {
+      SCHEME_KEYS.forEach(schemeKey => {
+        const entries = CURRICULA[schemeKey].semesters
+          .map(semester => [semester.id, getSemesterExam(schemeKey, semester.id)])
+          .filter(([, exam]) => exam);
+        if (!entries.length) return;
+        const payload = [];
+        pushSchemeRef(payload, schemeKey);
+        entries.forEach(([semesterId, exam]) => {
+          pushVarint(payload, semesterId);
+          const listed = encodeListedExam(exam);
+          if (listed) payload.push(EXAM_KIND_LISTED, ...listed);
+          else { payload.push(EXAM_KIND_TEXT); pushVstr(payload, exam); }
+        });
+        pushSection(TAG_SEMESTER_EXAMS, payload);
+      });
+    }
+
+    function readSemesterExamSection(section, result) {
+      const schemeKey = readSchemeRef(section);
+      const exams = {};
+      while (!section.done()) {
+        const semesterId = readVarint(section);
+        const kind = section.u8();
+        let exam = "";
+        if (kind === EXAM_KIND_LISTED) {
+          const code = section.u8();
+          exam = decodeListedExam(code, section.u8());
+        } else if (kind === EXAM_KIND_TEXT) {
+          exam = readVstr(section);
+        } else {
+          break; // written by a newer page; the rest of this section is skipped safely
+        }
+        if (exam) exams[semesterId] = exam;
+      }
+      if (!result.exams) result.exams = {};
+      result.exams[schemeKey] = { ...(result.exams[schemeKey] || {}), ...exams };
+    }
+
     // v6 encoder: kept as the fallback when a v7 link fails its self-check.
     function encodeShareStateV6() {
       const out = [SHARE_VERSION_V6];
@@ -4187,19 +4431,23 @@
         pushSection(V6_TAG_SCHEME, payload);
       });
 
+      pushSemesterExamSections(pushSection);
+
       const details = encodeDetailsPayload(false); // identical bytes to the original v6
       if (details) pushSection(V6_TAG_DETAILS, details);
 
       return SHARE_CODEC.encode(out);
     }
 
+    // Examination is stored per semester (tag 5), so the details section carries only
+    // PRN and name. Older links that carry one Examination here still decode.
     function currentShareDetails() {
-      const clean = id => String(document.getElementById(id).value || "").trim().replace(/\s+/g, " ");
+      const clean = id => cleanText(document.getElementById(id).value);
       return {
-        exam: clean("report-examination"),
+        exam: "",
         prn: clean("report-prn"),
         name: clean("report-student-name"),
-        year: yearSelect ? String(yearSelect.value || "") : ""
+        year: "" // derived from the semester; older links that carry a year still decode
       };
     }
 
@@ -4254,6 +4502,7 @@
     //   tag 4  scheme: schemeRef, activeSemester varint, then per semester with data:
     //          semesterId varint, itemCount varint, signature u32,
     //          ceil(itemCount / 2) bytes of 4-bit values, then a vstr per escaped grade.
+    //   tag 5  per-semester examinations (see TAG_SEMESTER_EXAMS)
     //   Items are ALL codes of the semester (regular, audit, every elective option),
     //   sorted by code. 4-bit value: 0 = nothing, 1–13 = V6_GRADES index,
     //   14 = elective option chosen without a grade, 15 = grade follows as text.
@@ -4352,6 +4601,7 @@
         const payload = encodeV7SchemePayload(schemeKey);
         if (payload) pushSection(V7_TAG_SCHEME, payload);
       });
+      pushSemesterExamSections(pushSection);
       const details = encodeDetailsPayload(true);
       if (details) pushSection(V6_TAG_DETAILS, details);
       return SHARE_CODEC.encode(out);
@@ -4434,10 +4684,7 @@
       const flags = section.u8();
       if (flags & V6_EXAM_LISTED) {
         const code = section.u8();
-        const year = 2000 + section.u8();
-        const pattern = V6_EXAM_PATTERNS[code >> 4];
-        const season = V6_EXAM_SEASONS[code & 0xF];
-        if (pattern && season) details.exam = pattern.replace("{season}", season).replace("{year}", String(year));
+        details.exam = decodeListedExam(code, section.u8());
       } else if (flags & V6_EXAM_TEXT) {
         details.exam = readVstr(section);
       }
@@ -4453,7 +4700,7 @@
 
     function parseShareV7(bytes) {
       const reader = shareReader(bytes, 1);
-      const result = { activeScheme: "", schemes: {}, details: null };
+      const result = { activeScheme: "", schemes: {}, details: null, exams: null };
       while (!reader.done()) {
         const tag = reader.u8();
         const section = reader.sub(readVarint(reader));
@@ -4493,6 +4740,8 @@
             });
           }
           result.schemes[schemeKey] = scheme;
+        } else if (tag === TAG_SEMESTER_EXAMS) {
+          readSemesterExamSection(section, result);
         } else if (tag === V6_TAG_DETAILS) {
           result.details = parseV7Details(section);
         }
@@ -4511,6 +4760,9 @@
         });
         Object.entries(target.selections[schemeKey] || {}).forEach(([key, choice]) => {
           if (Number(choice)) parts.push(`E:${schemeKey}:${key}:${Number(choice)}`);
+        });
+        Object.entries((target.exams && target.exams[schemeKey]) || {}).forEach(([semesterId, exam]) => {
+          if (exam) parts.push(`X:${schemeKey}:${semesterId}:${exam}`);
         });
       });
       const d = details || {};
@@ -4542,7 +4794,7 @@
 
     function parseShareV6(bytes) {
       const reader = shareReader(bytes, 1);
-      const result = { activeScheme: "", schemes: {}, details: null };
+      const result = { activeScheme: "", schemes: {}, details: null, exams: null };
       while (!reader.done()) {
         const tag = reader.u8();
         const section = reader.sub(readVarint(reader));
@@ -4567,15 +4819,14 @@
             });
           }
           result.schemes[schemeKey] = scheme;
+        } else if (tag === TAG_SEMESTER_EXAMS) {
+          readSemesterExamSection(section, result);
         } else if (tag === V6_TAG_DETAILS) {
           const details = { exam: "", prn: "", name: "", year: "" };
           const flags = section.u8();
           if (flags & V6_EXAM_LISTED) {
             const code = section.u8();
-            const year = 2000 + section.u8();
-            const pattern = V6_EXAM_PATTERNS[code >> 4];
-            const season = V6_EXAM_SEASONS[code & 0xF];
-            if (pattern && season) details.exam = pattern.replace("{season}", season).replace("{year}", String(year));
+            details.exam = decodeListedExam(code, section.u8());
           } else if (flags & V6_EXAM_TEXT) {
             details.exam = readVstr(section);
           }
@@ -4877,18 +5128,14 @@
       return null;
     }
 
-    // Restores whichever details the link contains; anything missing stays empty.
+    // Restores the PRN and name the link contains; anything missing stays empty.
+    // (Examinations are restored per semester by applyShareState.)
     function applyShareDetails(details) {
       if (!details) return;
-      setExamination(details.exam);
       document.getElementById("report-prn").value = details.prn || "";
       document.getElementById("report-student-name").value = details.name || "";
-      if (details.year && yearSelect && yearSelect.hasOption(details.year)) {
-        yearSelect.setValue(details.year);
-        const defaultYear = defaultYearForSemester(Number(state.activeSemester[state.activeScheme]));
-        reportYearEdited = details.year !== defaultYear;
-      }
-      ["report-examination", "report-prn", "report-student-name", "exam-other-input"].forEach(id => {
+      // details.year (from older links) is ignored: Year now follows the semester.
+      ["report-prn", "report-student-name"].forEach(id => {
         document.getElementById(id).dataset.touched = "";
       });
       updateReportActionState();
@@ -4904,6 +5151,7 @@
       SCHEME_KEYS.forEach(schemeKey => {
         target.grades[schemeKey] = {};
         target.selections[schemeKey] = {};
+        target.exams[schemeKey] = {};
       });
 
       Object.entries(shared.schemes).forEach(([schemeKey, data]) => {
@@ -4939,8 +5187,29 @@
         target.activeSemester[schemeKey] = exists ? requested : firstSemesterId(schemeKey);
       });
 
+      // Per-semester examinations (tag 5).
+      Object.entries(shared.exams || {}).forEach(([schemeKey, exams]) => {
+        if (!CURRICULA[schemeKey]) return;
+        Object.entries(exams || {}).forEach(([semesterId, exam]) => {
+          const id = Number(semesterId);
+          const text = cleanText(exam);
+          if (text && CURRICULA[schemeKey].semesters.some(semester => semester.id === id)) {
+            target.exams[schemeKey][id] = text;
+          }
+        });
+      });
+
       if (CURRICULA[shared.activeScheme]) target.activeScheme = shared.activeScheme;
       else if (!CURRICULA[target.activeScheme]) target.activeScheme = DEFAULT_SCHEME;
+
+      // Older links carry one Examination for the whole link: it belongs to the
+      // semester that was open when the link was made.
+      const legacyExam = cleanText(shared.details && shared.details.exam);
+      if (legacyExam) {
+        const schemeKey = target.activeScheme;
+        const semesterId = target.activeSemester[schemeKey];
+        if (!target.exams[schemeKey][semesterId]) target.exams[schemeKey][semesterId] = legacyExam;
+      }
 
       shared.skipped = skipped;
       return true;
@@ -5008,8 +5277,7 @@
       return YEAR_OPTIONS[yearIndex][0];
     }
 
-    let reportYearEdited = false;
-    // Semester being exported from the marksheet dialog (null = the semester chosen in Student Details).
+    // Semester being exported from the marksheet dialog (null = the semester open on screen).
     let reportSemesterOverride = null;
     // Purpose chosen in the dialog; printed on the marksheet as the Remark.
     let reportPurpose = "";
@@ -5017,18 +5285,15 @@
     function reportSemesterObject() {
       const semesterId = reportSemesterOverride !== null
         ? reportSemesterOverride
-        : Number(document.getElementById("report-semester").value);
+        : state.activeSemester[state.activeScheme];
       return CURRICULA[state.activeScheme].semesters.find(
         semester => semester.id === semesterId
       ) || getSemester();
     }
 
-    // Year printed on the marksheet: the Year field for the semester chosen in Student
-    // Details, otherwise the normal year for that semester.
+    // Year printed on the marksheet: worked out from the semester (Sem 1–2 First, 3–4 Second, …).
     function reportYearFor(semester) {
-      const selectedId = Number(document.getElementById("report-semester").value);
-      const selectedYear = String(document.getElementById("report-year").value || "");
-      return semester.id === selectedId && selectedYear ? selectedYear : defaultYearForSemester(semester.id);
+      return defaultYearForSemester(semester.id);
     }
 
     function reportPurposeRemark() {
@@ -5057,7 +5322,7 @@
     }
 
     // ---------------------------------------------------------------------
-    // Custom dropdown (listbox) used for Examination, Semester and Year.
+    // Custom dropdown (listbox) used for Examination and elective subjects.
     // Supports optional group headings, keyboard navigation, type-ahead and
     // an animated open/close. Visual classes are shared (exam-*).
     // ---------------------------------------------------------------------
@@ -5086,7 +5351,7 @@
         this.typeaheadTimer = null;
         this.signature = "";
         // Portal menus live in <body> with fixed positioning, so clipping containers
-        // (like the scrollable subject table) can't cut them off.
+        // (like the scrollable subject table or the dialog) can't cut them off.
         this.portal = portal;
         if (portal) {
           this.menu.classList.add("is-portal");
@@ -5331,7 +5596,7 @@
       CustomSelect.instances.forEach(select => { if (select.isOpen()) select.place(); });
     }
     window.addEventListener("resize", placeOpenDropdowns);
-    // Portal (fixed) menus follow their trigger when the page or the table scrolls.
+    // Portal (fixed) menus follow their trigger when the page, the table or the dialog scrolls.
     window.addEventListener("scroll", () => {
       CustomSelect.instances.forEach(select => { if (select.portal && select.isOpen()) select.place(); });
     }, { capture: true, passive: true });
@@ -5349,7 +5614,8 @@
     });
 
     // ---------------------------------------------------------------------
-    // Examination: year-grouped list (newest first) plus "Other" (free text).
+    // Examination (one per semester, chosen in the marksheet dialog):
+    // year-grouped list (newest first) plus "Other" (free text).
     // Edit the patterns to change the wording; {season} and {year} are filled in.
     // ---------------------------------------------------------------------
     const EXAMINATION_NAME_PATTERNS = [
@@ -5363,11 +5629,7 @@
     const EXAMINATION_YEARS_BACK = 7; // current year and the 7 before it
     const EXAM_OTHER = "__other__";
 
-    const examState = { choice: "" };
     const examNameParts = new Map(); // listed exam name -> [patternIndex, seasonIndex, year]
-    let examSelect = null;
-    let semesterSelect = null;
-    let yearSelect = null;
 
     function composeExaminationName(patternIndex, seasonIndex, year) {
       const pattern = EXAMINATION_NAME_PATTERNS[patternIndex];
@@ -5398,117 +5660,115 @@
       return groups;
     }
 
-    function syncExaminationValue() {
-      const other = examState.choice === EXAM_OTHER;
-      const otherInput = document.getElementById("exam-other-input");
-      const name = other ? otherInput.value.trim().replace(/\s+/g, " ") : examState.choice;
-      const hidden = document.getElementById("report-examination");
-      if (hidden.value !== name) {
-        hidden.value = name;
-        hidden.dispatchEvent(new Event("change", { bubbles: true }));
-      } else {
-        updateReportActionState();
-      }
+    let examGroupsCache = null;
+    function examGroups() {
+      if (!examGroupsCache) examGroupsCache = examinationGroups();
+      return examGroupsCache;
     }
 
-    function showExamOtherBox(show) {
-      const otherWrap = document.getElementById("exam-other");
-      const otherInput = document.getElementById("exam-other-input");
-      otherWrap.classList.toggle("is-open", show);
-      otherWrap.setAttribute("aria-hidden", String(!show));
-      otherInput.tabIndex = show ? 0 : -1;
+    function isListedExamination(name) {
+      examGroups();
+      return examNameParts.has(name);
     }
 
-    function chooseExamination(value) {
-      const wasOther = examState.choice === EXAM_OTHER;
-      examState.choice = value;
-      examSelect.setValue(value);
+    function setSemesterExam(schemeKey, semesterId, name) {
+      const text = cleanText(name);
+      if (text) state.exams[schemeKey][semesterId] = text;
+      else delete state.exams[schemeKey][semesterId];
+      updateReportActionState();
+    }
+
+    // What each semester's dropdown shows: a listed name, or "Other" with its typed text.
+    // Rebuilt from state whenever they disagree (e.g. after a shared link is loaded).
+    const examUi = new Map();
+    function examUiFor(schemeKey, semesterId) {
+      const key = `${schemeKey}:${semesterId}`;
+      const exam = getSemesterExam(schemeKey, semesterId);
+      const ui = examUi.get(key);
+      const consistent = ui && (ui.choice === EXAM_OTHER ? cleanText(ui.other) === exam : ui.choice === exam);
+      if (consistent) return ui;
+      const listed = Boolean(exam) && isListedExamination(exam);
+      const fresh = { choice: !exam ? "" : listed ? exam : EXAM_OTHER, other: exam && !listed ? exam : "" };
+      examUi.set(key, fresh);
+      return fresh;
+    }
+
+    // The control a student has to fill in for a semester's examination.
+    function semesterExamControl(semesterId) {
+      const ui = examUiFor(state.activeScheme, semesterId);
+      return ui.choice === EXAM_OTHER
+        ? document.getElementById(`sem-exam-${semesterId}-other-input`)
+        : document.getElementById(`sem-exam-${semesterId}-trigger`);
+    }
+
+    function showSemesterExamOther(semesterId, show) {
+      const wrap = document.getElementById(`sem-exam-${semesterId}-other`);
+      const input = document.getElementById(`sem-exam-${semesterId}-other-input`);
+      if (!wrap || !input) return;
+      wrap.classList.toggle("is-open", show);
+      wrap.setAttribute("aria-hidden", String(!show));
+      input.tabIndex = show ? 0 : -1;
+    }
+
+    function chooseSemesterExam(semesterId, value) {
+      const schemeKey = state.activeScheme;
+      const ui = examUiFor(schemeKey, semesterId);
+      const wasOther = ui.choice === EXAM_OTHER;
+      ui.choice = value;
       const isOther = value === EXAM_OTHER;
-      showExamOtherBox(isOther);
-      syncExaminationValue();
-
-      if (isOther) {
-        const otherInput = document.getElementById("exam-other-input");
-        if (!wasOther) {
-          // Don't flag the empty box red before the student has had a chance to type.
-          otherInput.dataset.touched = "";
-          document.getElementById("report-examination").dataset.touched = "";
-          updateReportActionState();
-        }
-        setTimeout(() => otherInput.focus(), 60);
-      }
+      showSemesterExamOther(semesterId, isOther);
+      const input = document.getElementById(`sem-exam-${semesterId}-other-input`);
+      // Don't flag the empty box red before the student has had a chance to type.
+      if (isOther && !wasOther && input) input.dataset.touched = "";
+      setSemesterExam(schemeKey, semesterId, isOther ? ui.other : value);
+      if (isOther && input) setTimeout(() => input.focus(), 60);
     }
 
-    // Programmatic restore (share links): listed name, or "Other" with text.
-    function setExamination(name) {
-      const text = String(name || "").trim();
-      const otherInput = document.getElementById("exam-other-input");
-      if (!text) {
-        examState.choice = "";
-        otherInput.value = "";
-      } else if (examSelect.hasOption(text)) {
-        examState.choice = text;
-      } else {
-        examState.choice = EXAM_OTHER;
-        otherInput.value = text;
-      }
-      examSelect.setValue(examState.choice);
-      showExamOtherBox(examState.choice === EXAM_OTHER);
-      syncExaminationValue();
-    }
+    let semesterExamSelects = [];
 
-    function setupExaminationPicker() {
-      examSelect = new CustomSelect("exam", {
+    function setupSemesterExamPicker(semesterId) {
+      const schemeKey = state.activeScheme;
+      const prefix = `sem-exam-${semesterId}`;
+      const ui = examUiFor(schemeKey, semesterId);
+
+      const select = new CustomSelect(prefix, {
         placeholder: "Select examination",
+        portal: true, // the dialog would clip an in-place menu
         displayFor: value => (value === EXAM_OTHER ? "Other (typed below)" : value),
-        onSelect: chooseExamination,
+        onSelect: value => chooseSemesterExam(semesterId, value),
         onClose: () => {
-          document.getElementById("report-examination").dataset.touched = "true";
+          select.trigger.dataset.touched = "true";
           updateReportActionState();
         }
       });
-      examSelect.setOptions(examinationGroups());
+      select.setOptions(examGroups());
+      select.setValue(ui.choice);
+      semesterExamSelects.push(select);
 
-      const otherInput = document.getElementById("exam-other-input");
-      otherInput.addEventListener("input", syncExaminationValue);
-      otherInput.addEventListener("blur", () => {
-        otherInput.dataset.touched = "true";
-        document.getElementById("report-examination").dataset.touched = "true";
-        otherInput.value = otherInput.value.trim().replace(/\s+/g, " ");
-        syncExaminationValue();
+      const input = document.getElementById(`${prefix}-other-input`);
+      input.value = ui.other;
+      showSemesterExamOther(semesterId, ui.choice === EXAM_OTHER);
+
+      input.addEventListener("input", () => {
+        const current = examUiFor(schemeKey, semesterId);
+        current.other = input.value;
+        setSemesterExam(schemeKey, semesterId, input.value);
       });
-      syncExaminationValue();
+      input.addEventListener("blur", () => {
+        input.dataset.touched = "true";
+        input.value = cleanText(input.value);
+        const current = examUiFor(schemeKey, semesterId);
+        current.other = input.value;
+        setSemesterExam(schemeKey, semesterId, input.value);
+      });
     }
 
     // ---------------------------------------------------------------------
-    // Semester (kept in sync with the semester tabs) and Year (auto from semester).
+    // Year names (Year itself is worked out from the semester number).
     // ---------------------------------------------------------------------
     const YEAR_OPTIONS = [["FIRST", "First Year"], ["SECOND", "Second Year"], ["THIRD", "Third Year"], ["FOURTH", "Fourth Year"]];
-    let lastSyncedSemesterKey = "";
 
     function setupReportDetails() {
-      setupExaminationPicker();
-
-      semesterSelect = new CustomSelect("semester", {
-        placeholder: "Select semester",
-        hiddenId: "report-semester",
-        onSelect: value => {
-          state.activeSemester[state.activeScheme] = Number(value);
-          render();
-        }
-      });
-
-      yearSelect = new CustomSelect("year", {
-        placeholder: "Select year",
-        hiddenId: "report-year",
-        onSelect: () => {
-          reportYearEdited = true;
-          scheduleGradeReportRender();
-          updateReportActionState();
-        }
-      });
-      yearSelect.setOptions([{ label: null, options: YEAR_OPTIONS.map(([value, label]) => ({ value, label })) }]);
-
       ["report-prn", "report-student-name"].forEach(id => {
         const field = document.getElementById(id);
         field.addEventListener("input", () => {
@@ -5522,11 +5782,6 @@
         });
       });
 
-      document.getElementById("report-examination").addEventListener("change", () => {
-        scheduleGradeReportRender();
-        updateReportActionState();
-      });
-
       // Purpose (printed as the Remark on the marksheet).
       document.querySelectorAll('input[name="report-purpose"]').forEach(radio => {
         radio.addEventListener("change", () => {
@@ -5538,65 +5793,41 @@
       });
     }
 
-    // Keeps the Semester field on the active semester, and Year on its default unless edited.
+    // Semester and Year come from the semester tabs, so only the button state needs refreshing.
     function syncReportFields() {
-      if (!semesterSelect) return;
-      const scheme = CURRICULA[state.activeScheme];
-      semesterSelect.setOptions([{
-        label: null,
-        options: scheme.semesters.map(semester => ({ value: String(semester.id), label: `Semester ${semester.id}` }))
-      }]);
-      const active = String(state.activeSemester[state.activeScheme]);
-      semesterSelect.setValue(active);
-
-      const key = `${state.activeScheme}:${active}`;
-      if (key !== lastSyncedSemesterKey) {
-        lastSyncedSemesterKey = key;
-        reportYearEdited = false; // a new semester resets Year to its default
-      }
-      if (!reportYearEdited || !yearSelect.value) {
-        reportYearEdited = false;
-        yearSelect.setValue(defaultYearForSemester(Number(active)));
-      }
       updateReportActionState();
     }
 
-    // Every report detail is required before a download is allowed.
-    const REPORT_REQUIRED_FIELDS = [
-      ["report-examination", "Examination"],
+    // Student's Name and PRN (top of the dialog) are required for every download.
+    const STUDENT_FIELDS = [
       ["report-student-name", "Student's Name"],
-      ["report-prn", "PRN"],
-      ["report-semester", "Semester"],
-      ["report-year", "Year"]
+      ["report-prn", "PRN"]
     ];
     let reportExportBusy = false;
 
-    // The visible, focusable control for a required field (the exam value is a hidden input).
-    function reportFieldControl(id) {
-      if (id === "report-semester") return document.getElementById("semester-trigger");
-      if (id === "report-year") return document.getElementById("year-trigger");
-      if (id !== "report-examination") return document.getElementById(id);
-      // With "Other" chosen, the text box is the control that needs filling in.
-      return examState.choice === EXAM_OTHER
-        ? document.getElementById("exam-other-input")
-        : document.getElementById("exam-trigger");
-    }
-
-    function missingReportFields() {
-      return REPORT_REQUIRED_FIELDS
-        .filter(([id]) => !String(document.getElementById(id).value || "").trim())
+    function missingStudentFields() {
+      return STUDENT_FIELDS
+        .filter(([id]) => !cleanText(document.getElementById(id).value))
         .map(([, label]) => label);
     }
 
     function updateReportActionState() {
-      const missing = missingReportFields();
+      const missing = missingStudentFields();
+      const schemeKey = state.activeScheme;
 
-      // Per-semester PDF / JPG / View buttons (and the viewer's PDF / JPG) need
-      // every detail plus a purpose.
-      const blocked = reportExportBusy || missing.length > 0 || !reportPurpose;
+      // PDF / JPG / View need the name, PRN, a purpose and that semester's examination.
+      // (The viewer's PDF / JPG buttons have no data-semester: they use the semester on view.)
       document.querySelectorAll(".sem-export-btn").forEach(button => {
-        button.disabled = blocked;
+        const semesterId = button.dataset.semester ? Number(button.dataset.semester) : reportViewSemesterId;
+        const examMissing = semesterId === null || !getSemesterExam(schemeKey, semesterId);
+        button.disabled = reportExportBusy || missing.length > 0 || !reportPurpose || examMissing;
       });
+
+      const detailsHint = document.getElementById("report-details-hint");
+      if (detailsHint) {
+        const text = missing.length ? `Fill in ${missing.join(" and ")} to enable PDF, JPG and View.` : "";
+        if (detailsHint.textContent !== text) detailsHint.textContent = text;
+      }
 
       const purposeHint = document.getElementById("report-purpose-hint");
       if (purposeHint) {
@@ -5606,31 +5837,39 @@
         if (purposeHint.textContent !== text) purposeHint.textContent = text;
       }
 
-      // The Provisional Marksheet button stays disabled until every detail is filled in.
-      const openButton = document.getElementById("open-grade-report");
-      openButton.disabled = missing.length > 0;
-      openButton.title = missing.length ? `Fill in ${missing.join(", ")} first` : "";
-
-      const hint = document.getElementById("report-required-hint");
-      const hintText = missing.length && isAdminMode()
-        ? `Fill in ${missing.join(", ")} to enable Provisional Marksheet.`
-        : "";
-      if (hint.textContent !== hintText) hint.textContent = hintText;
-
-      // Red outline only after the user has interacted with a field.
-      // The exam value can be shown by either the dropdown or the "Other" box; reset both.
-      ["exam-trigger", "exam-other-input"].forEach(controlId => {
-        const control = document.getElementById(controlId);
-        if (control) control.classList.remove("is-invalid");
+      // Per-semester examination: hint + red outline once the student has interacted.
+      document.querySelectorAll("#report-semester-list .sem-card[data-semester]").forEach(card => {
+        const semesterId = Number(card.dataset.semester);
+        const exam = getSemesterExam(schemeKey, semesterId);
+        const isOther = examUiFor(schemeKey, semesterId).choice === EXAM_OTHER;
+        const trigger = document.getElementById(`sem-exam-${semesterId}-trigger`);
+        const other = document.getElementById(`sem-exam-${semesterId}-other-input`);
+        const hint = document.getElementById(`sem-exam-${semesterId}-hint`);
+        if (trigger) {
+          trigger.classList.toggle("is-invalid", !exam && !isOther && trigger.dataset.touched === "true");
+          trigger.setAttribute("aria-invalid", String(!exam && !isOther));
+        }
+        if (other) {
+          other.classList.toggle("is-invalid", !exam && isOther && other.dataset.touched === "true");
+          other.setAttribute("aria-invalid", String(!exam && isOther));
+        }
+        if (hint) {
+          const text = exam ? "" : isOther
+            ? "Type the examination name to enable PDF, JPG and View."
+            : "Select the examination to enable PDF, JPG and View.";
+          if (hint.textContent !== text) hint.textContent = text;
+        }
       });
 
-      REPORT_REQUIRED_FIELDS.forEach(([id]) => {
+      // Red outline on the name / PRN only after the user has interacted with the field.
+      STUDENT_FIELDS.forEach(([id]) => {
         const field = document.getElementById(id);
-        const visual = reportFieldControl(id);
-        const empty = !String(field.value || "").trim();
-        visual.classList.toggle("is-invalid", empty && field.dataset.touched === "true");
-        visual.setAttribute("aria-invalid", empty ? "true" : "false");
+        const empty = !cleanText(field.value);
+        field.classList.toggle("is-invalid", empty && field.dataset.touched === "true");
+        field.setAttribute("aria-invalid", empty ? "true" : "false");
       });
+
+      refreshSubmitState();
       return missing;
     }
 
@@ -5649,7 +5888,7 @@
 
       setReportText(
         "pdf-examination",
-        document.getElementById("report-examination").value.toUpperCase(),
+        getSemesterExam(schemeKey, semester.id).toUpperCase(),
         "-"
       );
       setReportText(
@@ -5706,12 +5945,12 @@
 
       document.getElementById("pdf-sgpa").textContent =
         semResult.complete && !semResult.hasFail && semResult.sgpa !== null
-          ? semResult.sgpa.toFixed(2)
+          ? formatGpa(semResult.sgpa)
           : "-";
 
       document.getElementById("pdf-cgpa").textContent =
         cumResult && cumResult.cgpa !== null
-          ? cumResult.cgpa.toFixed(2)
+          ? formatGpa(cumResult.cgpa)
           : "-";
 
       // Remark below the table: the purpose chosen in the dialog.
@@ -5791,7 +6030,7 @@
     }
 
     // Renders the hidden report for one semester while `task` runs, then restores
-    // the semester chosen in Student Details (used by Ctrl+P printing).
+    // the semester open on screen (used by Ctrl+P printing).
     async function withReportSemester(semesterId, task) {
       reportSemesterOverride = semesterId;
       try {
@@ -5803,11 +6042,14 @@
       }
     }
 
-    // One card per completely filled semester, each with PDF / JPG / View.
+    // One card per completely filled semester: Examination, then PDF / JPG / View.
     function renderReportSemesterList() {
       const list = document.getElementById("report-semester-list");
       const schemeKey = state.activeScheme;
       const filled = filledSemesters(schemeKey);
+
+      semesterExamSelects.forEach(select => select.destroy());
+      semesterExamSelects = [];
 
       if (!filled.length) {
         list.innerHTML = `<div class="sem-empty">No semester is completely filled yet. Enter every grade of a semester and it will appear here.</div>`;
@@ -5818,13 +6060,42 @@
       list.innerHTML = filled.map(semester => {
         const result = semesterState(schemeKey, semester);
         const cumulative = cumulativeState(schemeKey, semester.id);
-        const sgpa = result.sgpa !== null ? result.sgpa.toFixed(2) : "—";
-        const cgpa = cumulative.cgpa !== null ? cumulative.cgpa.toFixed(2) : "—";
+        const sgpa = result.sgpa !== null ? formatGpa(result.sgpa) : "—";
+        const cgpa = cumulative.cgpa !== null ? formatGpa(cumulative.cgpa) : "—";
         const id = semester.id;
+        const prefix = `sem-exam-${id}`;
         return `
-          <div class="sem-card" role="group" aria-label="Semester ${id}">
+          <div class="sem-card" role="group" aria-label="Semester ${id}" data-semester="${id}">
             <span class="sem-chip">Semester ${id}</span>
             <div class="sem-card-meta">SGPA ${sgpa} &nbsp;|&nbsp; CGPA ${cgpa}</div>
+
+            <div class="report-field sem-exam-field">
+              <span id="${prefix}-label">Examination <em class="req" aria-hidden="true">*</em></span>
+              <div class="exam-select">
+                <button type="button" class="exam-trigger" id="${prefix}-trigger"
+                        aria-haspopup="listbox" aria-expanded="false" aria-controls="${prefix}-listbox"
+                        aria-labelledby="${prefix}-label ${prefix}-trigger-text">
+                  <span class="exam-trigger-text is-placeholder" id="${prefix}-trigger-text">Select examination</span>
+                  <svg class="exam-chevron" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+                    <path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="exam-menu" id="${prefix}-menu" hidden>
+                  <div class="exam-listbox" id="${prefix}-listbox" role="listbox" tabindex="-1"
+                       aria-labelledby="${prefix}-label"></div>
+                </div>
+              </div>
+              <div class="exam-other" id="${prefix}-other" aria-hidden="true">
+                <div class="exam-other-inner">
+                  <input type="text" id="${prefix}-other-input" maxlength="100" autocomplete="off"
+                         placeholder="Type the examination name"
+                         aria-label="Semester ${id} examination name (other)" tabindex="-1">
+                </div>
+              </div>
+              <div class="sem-card-hint" id="${prefix}-hint" aria-live="polite"></div>
+            </div>
+
             <div class="sem-card-actions">
               <button type="button" class="sem-export-btn is-primary" data-action="pdf" data-semester="${id}"
                       aria-label="Download Semester ${id} as PDF">PDF</button>
@@ -5836,15 +6107,28 @@
           </div>`;
       }).join("");
 
+      filled.forEach(semester => setupSemesterExamPicker(semester.id));
       updateReportActionState();
     }
 
     let reportReturnFocus = null;
 
-    // ---- Admin mode -------------------------------------------------------------
-    // The Provisional Marksheet tools appear only when the address has "admin" in its
-    // # part: page.html#admin, or a student's share link with &admin added at the end.
-    // Share links made on this page never include it.
+    // While a popup is open, the page behind it can't be focused or clicked (inert),
+    // so Tab can't wander into the grade boxes underneath.
+    function setBackgroundInert(on) {
+      document.querySelectorAll("main.page > *:not(#report-overlay)").forEach(element => {
+        element.inert = on;
+        element.toggleAttribute("inert", on);
+      });
+    }
+
+    // ---- Admin mode (office staff) ------------------------------------------------
+    // Turned on by "admin" in the address's # part: page.html#admin, or a student's
+    // share link with &admin added at the end. Share links never include it.
+    // In admin mode: no download warning, downloads are NOT submitted to the college
+    // (so opening a student's link doesn't create a second submission), and Ctrl+P
+    // prints the marksheet. Students see the same button, with the warning and
+    // automatic submission.
     function isAdminMode() {
       const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
       return [...params.keys()].some(key => key.trim().toLowerCase() === "admin");
@@ -5853,34 +6137,38 @@
     function applyAdminMode() {
       const admin = isAdminMode();
       document.body.classList.toggle("is-admin", admin);
-      document.getElementById("open-grade-report").hidden = !admin;
       if (admin) {
-        // Prepare fonts and the PDF library in the background (admins only).
+        // Prepare fonts and the PDF library in the background.
         ensureReportWebFonts(8000);
         warmUpPdfExport();
-      } else {
-        closeGradeReport();
       }
       updateReportActionState();
     }
 
-    // Typing or removing #admin in the address bar takes effect without a reload.
-    window.addEventListener("hashchange", applyAdminMode);
+    // The link (#s=…) this page was opened with. Links are only read when the page loads,
+    // so if a DIFFERENT link is pasted into this tab the page reloads to show it, instead of
+    // silently keeping the previous student's data.
+    let LOADED_SHARE_PARAM = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("s") || "";
 
-    function openGradeReport() {
-      if (!isAdminMode()) return;
+    function reloadPage() {
+      window.location.reload();
+    }
+
+    // Typing or removing #admin in the address bar takes effect without a reload.
+    window.addEventListener("hashchange", () => {
+      const current = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("s") || "";
+      if (current && current !== LOADED_SHARE_PARAM) {
+        reloadPage();
+        return;
+      }
+      applyAdminMode();
+    });
+
+    // Opens the marksheet dialog. markMissing: outline an empty name / PRN in red right away.
+    function openGradeReport({ markMissing = false } = {}) {
       const overlay = document.getElementById("report-overlay");
       clearTimeout(reportCloseTimer); // reopened while the close animation was playing
       overlay.classList.remove("is-closing");
-      // Details are required: guide the user to what's missing instead of opening.
-      const missing = missingReportFields();
-      if (missing.length) {
-        REPORT_REQUIRED_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = "true"; });
-        updateReportActionState();
-        const first = REPORT_REQUIRED_FIELDS.find(([id]) => !String(document.getElementById(id).value || "").trim());
-        if (first) reportFieldControl(first[0]).focus();
-        return;
-      }
 
       reportReturnFocus = document.activeElement;
       CustomSelect.instances.forEach(select => select.close({ instant: true }));
@@ -5889,19 +6177,32 @@
       closeReportViewer({ focus: false });
       overlay.classList.add("open");
       overlay.setAttribute("aria-hidden", "false");
+      overlay.scrollTop = 0;
       document.body.style.overflow = "hidden";
+      setBackgroundInert(true);
       renderGradeReport();
       renderReportSemesterList();
 
-      // Short confirmation of who the marksheet is for.
-      const value = id => String(document.getElementById(id).value || "").trim();
-      document.getElementById("report-download-summary").innerHTML =
-        `<strong>${escapeHtml(value("report-student-name"))}</strong> &nbsp;|&nbsp; PRN ${escapeHtml(value("report-prn"))}<br>` +
-        `${escapeHtml(value("report-examination"))}`;
+      if (markMissing) {
+        STUDENT_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = "true"; });
+        updateReportActionState();
+      }
 
-      const firstExport = document.querySelector("#report-semester-list .sem-export-btn:not(:disabled)");
-      const checkedPurpose = document.querySelector('input[name="report-purpose"]:checked');
-      (firstExport || checkedPurpose || document.querySelector('input[name="report-purpose"]')).focus();
+      // Focus the first thing still needed: name / PRN, a semester's examination,
+      // the purpose, then the first download button.
+      const emptyField = STUDENT_FIELDS
+        .map(([id]) => document.getElementById(id))
+        .find(field => !cleanText(field.value));
+      const examMissingFor = [...document.querySelectorAll("#report-semester-list .sem-card[data-semester]")]
+        .map(card => Number(card.dataset.semester))
+        .find(id => !getSemesterExam(state.activeScheme, id));
+      const target = emptyField
+        || (examMissingFor !== undefined ? semesterExamControl(examMissingFor) : null)
+        || (!reportPurpose ? document.querySelector('input[name="report-purpose"]') : null)
+        || document.querySelector("#report-semester-list .sem-export-btn:not(:disabled)")
+        || document.querySelector('input[name="report-purpose"]:checked')
+        || document.getElementById("close-grade-report");
+      if (target) target.focus({ preventScroll: true });
 
       // Prepare the PDF fonts/libraries in the background.
       warmUpPdfExport();
@@ -5912,6 +6213,7 @@
     function closeGradeReport() {
       const overlay = document.getElementById("report-overlay");
       if (!overlay.classList.contains("open") || overlay.classList.contains("is-closing")) return;
+      CustomSelect.instances.forEach(select => select.close({ instant: true }));
 
       // Play the close animation, then hide.
       const finish = () => {
@@ -5926,6 +6228,7 @@
       }
       overlay.setAttribute("aria-hidden", "true");
       document.body.style.overflow = "";
+      setBackgroundInert(false);
       if (reportReturnFocus && typeof reportReturnFocus.focus === "function") {
         reportReturnFocus.focus();
       }
@@ -6082,7 +6385,7 @@
     }
 
     async function viewGradeReport(semesterId) {
-      if (!reportDetailsReady()) return;
+      if (!reportDetailsReady(semesterId)) return;
 
       // Open the tab right away (still inside the click), otherwise pop-up blockers stop it.
       const title = `Semester ${semesterId} – Provisional Marksheet`;
@@ -6129,11 +6432,13 @@
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.drawImage(rendered, 0, 0);
 
+      CustomSelect.instances.forEach(select => select.close({ instant: true }));
       reportViewSemesterId = semesterId;
       document.getElementById("report-view-title").textContent = `Semester ${semesterId} preview`;
       document.querySelector(".report-builder").classList.add("is-viewing");
       document.getElementById("report-viewer").hidden = false;
       document.getElementById("report-overlay").scrollTop = 0;
+      updateReportActionState();
       document.getElementById("report-view-back").focus();
     }
 
@@ -6152,31 +6457,48 @@
       }
     }
 
+    // File name: PRN_NAME_SEM3.pdf / .jpg  (e.g. 2252291245123_AARAV_R_DESHMUKH_SEM3.pdf)
+    // Uppercase; spaces become "_"; characters not allowed in file names are removed.
+    // Letters in any script (e.g. Devanagari) are kept.
     function reportFilename(extension) {
-      const clean = value => String(value || "")
+      const part = value => String(value || "")
+        .normalize("NFC")
+        .toUpperCase()
         .trim()
-        .replace(/\s+/g, "_")
-        .replace(/[^A-Za-z0-9._-]/g, "")
+        .replace(/[\\/:*?"<>|#%&{}$!'@+`=]/g, " ")   // not allowed / risky in file names
+        .replace(/[^\p{L}\p{M}\p{N}_-]+/gu, "_")       // spaces, dots and other symbols -> _
+        .replace(/_+/g, "_")
         .replace(/^[._-]+|[._-]+$/g, "");
-      const student = clean(document.getElementById("report-student-name").value);
-      const prn = clean(document.getElementById("report-prn").value);
+      const prn = part(document.getElementById("report-prn").value);
+      const name = part(document.getElementById("report-student-name").value);
       const semester = reportSemesterOverride !== null
         ? reportSemesterOverride
-        : (Number(document.getElementById("report-semester").value) || 1);
+        : state.activeSemester[state.activeScheme];
 
-      const base = [
-        "Semester_Grade_Report",
-        student || prn || "Student",
-        `Sem${semester}`
-      ].join("_");
+      const base = [prn, name.slice(0, 80), `SEM${semester}`].filter(Boolean).join("_");
+      return `${base}.${extension}`;
+    }
 
-      const safe = base
-        .replace(/\s+/g, "_")
-        .replace(/[^A-Za-z0-9._-]/g, "")
-        .replace(/_+/g, "_")
-        .slice(0, 120);
+    // Network calls give up after this long; a stalled connection otherwise waits forever.
+    const NETWORK_TIMEOUT_MS = 20000;
 
-      return `${safe || "Semester_Grade_Report"}.${extension}`;
+    async function fetchWithTimeout(url, options = {}, ms = NETWORK_TIMEOUT_MS) {
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      let timer = null;
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          if (controller) controller.abort();
+          reject(new Error("The request timed out."));
+        }, ms);
+      });
+      try {
+        return await Promise.race([
+          fetch(url, controller ? { ...options, signal: controller.signal } : options),
+          timeout
+        ]);
+      } finally {
+        clearTimeout(timer);
+      }
     }
 
     function downloadBlob(blob, filename) {
@@ -6234,6 +6556,28 @@
     const REPORT_FONT_STACK = 'Carlito, Calibri, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
     // Uniform text-size multiplier for the report (preview, JPG and PDF). 1 = original size.
     const REPORT_TEXT_SCALE = 1.3;
+    // If a semester has many subjects, the report steps down through these sizes until it
+    // fits one A4 page with room left for signatures (1.3 = normal; 0.95 is still readable).
+    const REPORT_TEXT_SCALES = [1.3, 1.24, 1.18, 1.12, 1.06, 1.0, 0.95];
+    let reportTextScale = REPORT_TEXT_SCALE;
+    const REPORT_TOO_TALL =
+      "This semester has too many subjects to fit on one A4 page. Please contact the college office.";
+
+    // Runs paint() at the largest text size that fits; leaves reportTextScale set to it.
+    function paintFitted(paint) {
+      let lastError = null;
+      for (const scale of REPORT_TEXT_SCALES) {
+        reportTextScale = scale;
+        try {
+          paint();
+          return scale;
+        } catch (error) {
+          if (!/too many subjects|too tall/i.test(error?.message || "")) throw error;
+          lastError = error;
+        }
+      }
+      throw lastError;
+    }
 
     // Wait (bounded) for the Google Fonts Carlito faces so the canvas does not draw with a fallback.
     let reportFontsPromise = null;
@@ -6402,7 +6746,7 @@
       if (!ctx) throw new Error("Canvas export is not supported by this browser.");
 
       ctx.setTransform(pixelScale, 0, 0, pixelScale, 0, 0);
-      paintGradeReport(ctx, SAFE_EXPORT_WIDTH, SAFE_EXPORT_HEIGHT, model);
+      paintFitted(() => paintGradeReport(ctx, SAFE_EXPORT_WIDTH, SAFE_EXPORT_HEIGHT, model));
       return canvas;
     }
 
@@ -6420,7 +6764,7 @@
       const contentLeft = left + safeMm(8), contentRight = right - safeMm(8), contentWidth = contentRight - contentLeft;
       const centerX = (contentLeft + contentRight) / 2;
       let y = top + safeMm(11);
-      const t = value => Math.round(value * REPORT_TEXT_SCALE); // text sizes & text spacing
+      const t = value => Math.round(value * reportTextScale); // text sizes & text spacing
 
       // College name: shrink only if a wider font would not fit the line.
       const collegeLine = "RAJIV GANDHI COLLEGE OF ENGINEERING, RESEARCH AND TECHNOLOGY,";
@@ -6504,8 +6848,11 @@
 
       const sigLineH = t(compact ? 20 : 23);
       const sigFirstOffset = t(compact ? 18 : 24);
-      // Keep the signature block's last line about 17 mm above the page border.
-      const sigTop = Math.max(y + t(18), bottom - safeMm(17) - (sigFirstOffset + 3 * sigLineH));
+      // The signature block sits about 17 mm above the page border, and at least 18 mm of
+      // blank space is kept above it for real signatures. If the content would intrude,
+      // the report is too tall at this text size (paintFitted then tries a smaller size).
+      const sigTop = bottom - safeMm(17) - (sigFirstOffset + 3 * sigLineH);
+      if (sigTop - y < safeMm(18)) throw new Error(REPORT_TOO_TALL);
       const colW = contentWidth / 3;
       // [text, isBold] — only the officials' names are bold.
       const signatures = [
@@ -6524,9 +6871,7 @@
       });
 
       const signatureBottom = sigTop + sigFirstOffset + 3 * sigLineH;
-      if (y > bottom - safeMm(17) || signatureBottom > bottom - safeMm(2)) {
-        throw new Error("The report content is too tall for one A4 page. Shorten unusually long editable text and try again.");
-      }
+      if (y > bottom - safeMm(17) || signatureBottom > bottom - safeMm(2)) throw new Error(REPORT_TOO_TALL);
     }
 
     // Override the earlier SVG-based capture function with a safe Canvas2D-only renderer.
@@ -6705,11 +7050,12 @@
           try {
             await new Promise((resolve, reject) => {
               const script = document.createElement("script");
+              const timer = setTimeout(() => { script.remove(); reject(new Error(`${url} timed out`)); }, NETWORK_TIMEOUT_MS);
               script.src = url;
               script.async = true;
               script.crossOrigin = "anonymous";
-              script.onload = resolve;
-              script.onerror = () => { script.remove(); reject(new Error(url)); };
+              script.onload = () => { clearTimeout(timer); resolve(); };
+              script.onerror = () => { clearTimeout(timer); script.remove(); reject(new Error(url)); };
               document.head.appendChild(script);
             });
             if (window[globalName]) return window[globalName];
@@ -6780,7 +7126,7 @@
 
         for (const url of REPORT_FONT_BASE_URLS.map(base => base + REPORT_FONT_FILES[kind])) {
           try {
-            const response = await fetch(url, { mode: "cors" });
+            const response = await fetchWithTimeout(url, { mode: "cors" });
             if (!response.ok) continue;
             const bytes = new Uint8Array(await response.arrayBuffer());
             if (isTrueTypeBytes(bytes)) {
@@ -7148,9 +7494,23 @@
     async function buildTextPdf(model) {
       const { PDFLib, fontkit, regularBytes, boldBytes, italicBytes, layoutFonts } = await loadPdfResources();
 
+      // Carlito has no Devanagari/Tamil/emoji etc. Such text would print as empty boxes in
+      // a text PDF, so the caller makes an image PDF instead (the browser draws every script).
+      const reportTexts = [
+        ...model.info.flat(), ...model.subjects.flatMap(item => [item.code, item.name, item.credits, item.grade]),
+        model.sgpa, model.cgpa, model.remark, model.note
+      ];
+      const unsupported = reportTexts.some(text => [...String(text || "")].some(ch => /\S/.test(ch) &&
+        !(layoutFonts.regular.hasGlyphForCodePoint(ch.codePointAt(0)) && layoutFonts.bold.hasGlyphForCodePoint(ch.codePointAt(0)))));
+      if (unsupported) {
+        const error = new Error("The report contains characters the PDF font cannot show.");
+        error.unsupportedText = true;
+        throw error;
+      }
+
       // 1) Dry run: find exactly which glyphs this report uses in each style.
       const collector = createGlyphCollectorContext(layoutFonts);
-      paintGradeReport(collector, SAFE_EXPORT_WIDTH, SAFE_EXPORT_HEIGHT, model);
+      paintFitted(() => paintGradeReport(collector, SAFE_EXPORT_WIDTH, SAFE_EXPORT_HEIGHT, model));
 
       // 2) Embed trimmed fonts containing only those outlines. (pdf-lib's own subsetter
       //    corrupts Carlito's glyph data, so the fonts are trimmed here and embedded as-is.)
@@ -7189,12 +7549,27 @@
       showSnackbar(message, isError, busy ? 0 : (isError ? 6000 : 3500));
     }
 
-    function reportDetailsReady() {
+    // Name, PRN, this semester's examination and a purpose are all needed before
+    // a semester can be downloaded or viewed. Guides the student to what's missing.
+    function reportDetailsReady(semesterId) {
       const missing = updateReportActionState();
       if (missing.length) {
-        REPORT_REQUIRED_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = "true"; });
+        STUDENT_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = "true"; });
         updateReportActionState();
-        setExportBusy(false, `Please fill in: ${missing.join(", ")}.`, true);
+        showSnackbar(`Please fill in: ${missing.join(", ")}.`, true, 5000);
+        const first = STUDENT_FIELDS.map(([id]) => document.getElementById(id)).find(field => !cleanText(field.value));
+        if (first) first.focus();
+        return false;
+      }
+      if (!getSemesterExam(state.activeScheme, semesterId)) {
+        const trigger = document.getElementById(`sem-exam-${semesterId}-trigger`);
+        const other = document.getElementById(`sem-exam-${semesterId}-other-input`);
+        if (trigger) trigger.dataset.touched = "true";
+        if (other) other.dataset.touched = "true";
+        updateReportActionState();
+        showSnackbar(`Select the examination for Semester ${semesterId} first.`, true, 5000);
+        const control = semesterExamControl(semesterId);
+        if (control) control.focus();
         return false;
       }
       if (!reportPurpose) {
@@ -7207,7 +7582,10 @@
     }
 
     async function saveGradeReportJpg(semesterId) {
-      if (!reportDetailsReady()) return;
+      if (!reportDetailsReady(semesterId)) return;
+      const submission = await submitBeforeDownload();
+      if (!submission) return;
+      const note = submission === "submitted" ? "Submitted to college. " : "";
       setExportBusy(true, `Rendering Semester ${semesterId} JPG at ${JPG_EXPORT_DPI} DPI…`);
 
       await withReportSemester(semesterId, async () => {
@@ -7215,7 +7593,7 @@
           const canvas = await captureGradeReportCanvas(JPG_EXPORT_DPI);
           const jpgBlob = await withJpegDpi(await canvasToBlob(canvas, "image/jpeg", 0.95), JPG_EXPORT_DPI);
           downloadBlob(jpgBlob, reportFilename("jpg"));
-          setExportBusy(false, `Semester ${semesterId} JPG downloaded (${canvas.width} × ${canvas.height} px, ${JPG_EXPORT_DPI} DPI).`);
+          setExportBusy(false, `${note}Semester ${semesterId} JPG downloaded.`);
         } catch (error) {
           console.error(error);
           setExportBusy(
@@ -7228,26 +7606,34 @@
     }
 
     async function saveGradeReportPdf(semesterId) {
-      if (!reportDetailsReady()) return;
+      if (!reportDetailsReady(semesterId)) return;
+      const submission = await submitBeforeDownload();
+      if (!submission) return;
+      const note = submission === "submitted" ? "Submitted to college. " : "";
       setExportBusy(true, pdfResourcesPromise
         ? `Creating Semester ${semesterId} PDF…`
         : "Preparing fonts for the PDF (first time only)…");
 
+      let fallbackForText = false;
       await withReportSemester(semesterId, async () => {
         try {
           renderGradeReport();
           const pdfBlob = await buildTextPdf(getSafeExportModel());
           downloadBlob(pdfBlob, reportFilename("pdf"));
-          setExportBusy(false, `Semester ${semesterId} PDF downloaded.`);
+          setExportBusy(false, `${note}Semester ${semesterId} PDF downloaded.`);
           return;
         } catch (error) {
           console.error(error);
-          if (/too tall/i.test(error?.message || "")) {
+          if (/too many subjects/i.test(error?.message || "")) {
             setExportBusy(false, error.message, true);
             return;
           }
-          // Libraries or font could not be downloaded (e.g. offline): fall back to an image PDF.
-          setExportBusy(true, "Could not load the PDF font/library; creating an image-based PDF instead…");
+          // Fall back to an image PDF: either the text has characters the PDF font lacks
+          // (e.g. a name in Marathi), or the PDF library / font could not be downloaded.
+          fallbackForText = Boolean(error && error.unsupportedText);
+          setExportBusy(true, fallbackForText
+            ? `Creating Semester ${semesterId} PDF…`
+            : "Could not load the PDF font/library; creating an image-based PDF instead…");
         }
 
         try {
@@ -7262,11 +7648,15 @@
           );
 
           downloadBlob(pdfBlob, reportFilename("pdf"));
-          setExportBusy(
-            false,
-            "Image-based PDF downloaded (text not selectable). Check your internet connection for a text PDF.",
-            true
-          );
+          if (fallbackForText) {
+            setExportBusy(false, `${note}Semester ${semesterId} PDF downloaded.`);
+          } else {
+            setExportBusy(
+              false,
+              `${note}Image-based PDF downloaded (text not selectable). Check your internet connection for a text PDF.`,
+              true
+            );
+          }
         } catch (error) {
           console.error(error);
           setExportBusy(
@@ -7291,8 +7681,9 @@
       }
     }
 
-    document.getElementById("open-grade-report").addEventListener("click", openGradeReport);
+    document.getElementById("open-grade-report").addEventListener("click", () => requestGradeReport());
     document.getElementById("close-grade-report").addEventListener("click", closeGradeReport);
+    document.getElementById("report-footer-close").addEventListener("click", closeGradeReport);
 
     document.getElementById("report-semester-list").addEventListener("click", event => {
       const button = event.target.closest(".sem-export-btn");
@@ -7330,6 +7721,18 @@
     });
 
     document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !document.getElementById("delete-confirm").hidden) {
+        closeDeleteConfirm();
+        return;
+      }
+      if (event.key === "Escape" && !document.getElementById("load-dialog").hidden) {
+        closeLoadDialog();
+        return;
+      }
+      if (event.key === "Escape" && !document.getElementById("download-warning").hidden) {
+        closeDownloadWarning();
+        return;
+      }
       if (
         event.key !== "Escape" ||
         !document.getElementById("report-overlay").classList.contains("open")
@@ -7351,17 +7754,17 @@
       }
     };
 
-    let lastLoggedShareKey = "";
 
-    // True once the user has entered any grade or any student detail
+    // True once the user has entered any grade, examination or student detail
     // (typed, or loaded from a shared link).
     function hasUserInput() {
       const anyGrade = Object.values(state.grades).some(grades => Object.keys(grades).length > 0);
-      const anyDetail = ["report-examination", "report-prn", "report-student-name"].some(id => {
+      const anyExam = Object.values(state.exams).some(exams => Object.keys(exams).length > 0);
+      const anyDetail = ["report-prn", "report-student-name"].some(id => {
         const field = document.getElementById(id);
         return field && String(field.value || "").trim() !== "";
       });
-      return anyGrade || anyDetail;
+      return anyGrade || anyExam || anyDetail;
     }
 
     async function logShareToGoogleForm(shareUrl, prn, name) {
@@ -7373,7 +7776,7 @@
 
       // Google Forms doesn't send CORS headers, so the response is opaque;
       // "no-cors" still delivers the submission.
-      await fetch(cfg.actionUrl, {
+      await fetchWithTimeout(cfg.actionUrl, {
         method: "POST",
         mode: "no-cors",
         keepalive: true,
@@ -7384,19 +7787,150 @@
 
     const submitButton = document.getElementById("submit-share-link");
 
-    submitButton.addEventListener("click", async () => {
-      if (!hasUserInput()) {
-        showSnackbar("Nothing to submit yet. Enter your details and grades first.", true, 4000);
-        return;
+    // ---- Submission checks ---------------------------------------------------------
+    // Every semester that has at least one grade (in any scheme) must have ALL its grades.
+    function incompleteSemesters() {
+      const problems = [];
+      SCHEME_KEYS.forEach(schemeKey => {
+        CURRICULA[schemeKey].semesters.forEach(semester => {
+          if (isSemesterBlank(schemeKey, semester)) return;
+          const result = semesterState(schemeKey, semester);
+          if (!result.complete) problems.push({ schemeKey, semester, missing: result.total - result.entered });
+        });
+      });
+      return problems;
+    }
+
+    function hasAnyGradedSemester() {
+      return SCHEME_KEYS.some(schemeKey =>
+        CURRICULA[schemeKey].semesters.some(semester => !isSemesterBlank(schemeKey, semester)));
+    }
+
+    // Grade boxes holding something that is not a valid grade (e.g. "A" or "XY").
+    // Such text is never saved, so it would otherwise go unnoticed.
+    function invalidGradeInputs() {
+      return [...document.querySelectorAll("#semester-view .grade-input")].filter(input => {
+        const value = normalizeGrade(input.value);
+        return value && !isValidGrade(value);
+      });
+    }
+
+    // Opens the semester and puts the cursor in its first empty grade box.
+    function goToFirstMissingGrade(problem) {
+      state.activeScheme = problem.schemeKey;
+      state.activeSemester[problem.schemeKey] = problem.semester.id;
+      render();
+      const input = [...document.querySelectorAll("#semester-view .grade-input")]
+        .find(box => !isValidGrade(normalizeGrade(box.value)));
+      if (!input) return;
+      input.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+      input.focus({ preventScroll: true });
+      replayAnimation(input, "grade-shake");
+    }
+
+    // Returns true when the grades may be submitted; otherwise explains why and returns false.
+    function gradesReadyToSubmit(prefix = "") {
+      const invalid = invalidGradeInputs();
+      if (invalid.length) {
+        showSnackbar(`${prefix}Correct or clear the grade marked in red before submitting.`, true, 6000);
+        invalid[0].focus();
+        replayAnimation(invalid[0], "grade-shake");
+        return false;
       }
 
-      const clean = id => String(document.getElementById(id).value || "").trim().replace(/\s+/g, " ");
-      const prn = clean("report-prn");
-      const name = clean("report-student-name");
+      const incomplete = incompleteSemesters();
+      if (incomplete.length) {
+        const label = item =>
+          `${CURRICULA[item.schemeKey].label} Sem ${item.semester.id} (${item.missing} missing)`;
+        const shown = incomplete.slice(0, 3).map(label).join(", ");
+        const more = incomplete.length > 3 ? ` and ${incomplete.length - 3} more` : "";
+        showSnackbar(`${prefix}Enter every grade before submitting: ${shown}${more}.`, true, 8000);
+        goToFirstMissingGrade(incomplete[0]);
+        return false;
+      }
 
+      if (!hasAnyGradedSemester()) {
+        showSnackbar(`${prefix}Enter all the grades of at least one semester before submitting.`, true, 6000);
+        return false;
+      }
+      return true;
+    }
+
+    // ---- Submitting to the college -------------------------------------------------
+    // What counts as "the same submission": every grade, every elective choice, every
+    // semester's Examination, and the PRN / Name. The open tab or semester does not count.
+    // Kept only in memory (lastSubmittedKey), so a page refresh forgets it.
+    function submissionStateKey() {
+      return shareSignatureOf(state, currentShareDetails())
+        .split("\n")
+        .filter(line => !line.startsWith("A:") && !line.startsWith("S:"))
+        .join("\n");
+    }
+
+    function isCurrentStateSubmitted() {
+      return lastSubmittedKey !== null && lastSubmittedKey === submissionStateKey();
+    }
+
+    // Updates the Submit button and the status line in the download dialog.
+    function refreshSubmitState() {
+      const button = document.getElementById("submit-share-link");
+      const submitted = isCurrentStateSubmitted();
+      if (button) {
+        button.disabled = submitInFlight || submitted;
+        button.textContent = submitInFlight ? "Submitting…" : submitted ? "Submitted to College" : "Submit to College";
+        button.title = submitted ? "Already submitted. Change a grade or detail to submit again." : "";
+      }
+      const status = document.getElementById("report-submit-status");
+      if (status) {
+        const admin = isAdminMode();
+        status.classList.toggle("is-admin", admin);
+        status.classList.toggle("is-done", !admin && submitted);
+        status.textContent = admin
+          ? "Admin mode: downloads are not submitted to the college."
+          : submitted
+            ? "Submitted to the college. Downloading again will not resubmit unless you change something."
+            : "Saving as PDF or JPG will first submit your grades to the college.";
+      }
+    }
+
+    // Sends the current grades and details to the college.
+    // Returns "submitted", "already" (same data was sent earlier this session) or false.
+    async function submitToCollege({ automatic = false } = {}) {
+      if (submitInFlight) {
+        showSnackbar("A submission is already being sent. Please wait a moment.", false, 3000);
+        return false;
+      }
+      const prefix = automatic ? "Can't download yet. " : "";
+
+      if (!hasUserInput()) {
+        showSnackbar("Nothing to submit yet. Enter your grades first.", true, 4000);
+        return false;
+      }
+
+      const { prn, name } = currentShareDetails();
       if (!prn || !name) {
-        showSnackbar("Enter your PRN and name before submitting.", true, 4000);
-        return;
+        if (automatic) {
+          showSnackbar(`${prefix}Enter your name and PRN before submitting.`, true, 5000);
+          const first = STUDENT_FIELDS.map(([id]) => document.getElementById(id)).find(field => !cleanText(field.value));
+          if (first) first.focus();
+        } else {
+          // Name and PRN are entered in the Provisional Marksheet window.
+          requestGradeReport({ markMissing: true });
+          showSnackbar("Enter your name and PRN in the Provisional Marksheet window first.", true, 6000);
+        }
+        return false;
+      }
+
+      // Every started semester must be complete. When this blocks a download, the dialog
+      // is closed so the student can see the semester that needs grades.
+      if (automatic && (invalidGradeInputs().length || incompleteSemesters().length || !hasAnyGradedSemester())) {
+        closeGradeReport();
+      }
+      if (!gradesReadyToSubmit(prefix)) return false;
+
+      if (isCurrentStateSubmitted()) {
+        if (!automatic) showSnackbar("Already submitted to college. Change a grade or detail to submit again.", false, 4500);
+        return "already";
       }
 
       let shareUrl;
@@ -7405,33 +7939,48 @@
       } catch (error) {
         console.error(error);
         showSnackbar("Could not create the share link.", true);
-        return;
+        return false;
       }
 
-      // Don't submit the exact same entry twice.
-      const key = `${prn}|${name}|${shareUrl}`;
-      if (key === lastLoggedShareKey) {
-        showSnackbar("Already submitted to college.");
-        return;
-      }
-
-      submitButton.disabled = true;
-      showSnackbar("Submitting to college…", false, 0);
+      const key = submissionStateKey();
+      submitInFlight = true;
+      refreshSubmitState();
+      showSnackbar(automatic ? "Submitting to college before downloading…" : "Submitting to college…", false, 0);
       try {
         await logShareToGoogleForm(shareUrl, prn, name);
-        lastLoggedShareKey = key;
+        lastSubmittedKey = key;
         showSnackbar("Submitted to college.");
+        return "submitted";
       } catch (error) {
         console.warn("Google Form submission failed:", error);
-        showSnackbar("Could not submit. Check your connection and try again.", true, 5000);
+        showSnackbar(`${prefix}Could not submit to college. Check your connection and try again.`, true, 6000);
+        return false;
       } finally {
-        submitButton.disabled = false;
+        submitInFlight = false;
+        refreshSubmitState();
       }
-    });
+    }
 
-    shareButton.addEventListener("click", async () => {
+    // Called before every PDF/JPG download. Staff in admin mode never submit.
+    // Returns "submitted", "already", "admin", or false when the download must not go ahead.
+    async function submitBeforeDownload() {
+      if (isAdminMode()) return "admin";
+      reportExportBusy = true; // disable the download buttons while submitting
+      updateReportActionState();
+      try {
+        return await submitToCollege({ automatic: true });
+      } finally {
+        reportExportBusy = false;
+        updateReportActionState();
+      }
+    }
+
+    submitButton.addEventListener("click", () => submitToCollege());
+
+    // ---- Copy Link (toolbar) --------------------------------------------------------
+    async function copyShareLink() {
       if (!hasUserInput()) {
-        showSnackbar("Nothing to share yet. Enter your details or grades first.", true, 4000);
+        showSnackbar("Nothing to share yet. Enter your grades first.", true, 4000);
         return;
       }
 
@@ -7448,9 +7997,407 @@
         await copyText(shareUrl);
         showSnackbar("Link copied.");
       } catch {
-        window.prompt("Copy this share link:", shareUrl);
-        showSnackbar("Share link generated.");
+        window.prompt("Copy this link:", shareUrl);
+        showSnackbar("Link generated.");
       }
+    }
+
+    shareButton.addEventListener("click", copyShareLink);
+
+    // ---- Download warning (once per page load) -------------------------------------
+    const DOWNLOAD_WARNING_SECONDS = 15;
+    let downloadWarningTimer = null;
+    let downloadWarningReturnFocus = null;
+    let pendingReportOptions = {};
+
+    // Main button: the warning (once per page load), then the dialog.
+    function requestGradeReport(options = {}) {
+      if (isAdminMode() || downloadWarningAcknowledged) {
+        openGradeReport(options);
+        return;
+      }
+      pendingReportOptions = options;
+      openDownloadWarning();
+    }
+
+    function openDownloadWarning() {
+      const overlay = document.getElementById("download-warning");
+      const accept = document.getElementById("download-warning-accept");
+      downloadWarningReturnFocus = document.activeElement;
+      CustomSelect.instances.forEach(select => select.close({ instant: true }));
+
+      // Counted from a fixed end time, so a slow or backgrounded tab can't shorten it.
+      const endsAt = Date.now() + DOWNLOAD_WARNING_SECONDS * 1000;
+      const tick = () => {
+        const remaining = Math.ceil((endsAt - Date.now()) / 1000);
+        if (remaining > 0) {
+          accept.disabled = true;
+          accept.textContent = `I understand (${remaining})`;
+          return;
+        }
+        clearInterval(downloadWarningTimer);
+        downloadWarningTimer = null;
+        accept.disabled = false;
+        accept.textContent = "I understand";
+        accept.focus();
+      };
+      clearInterval(downloadWarningTimer);
+      tick();
+      downloadWarningTimer = setInterval(tick, 250);
+
+      overlay.hidden = false;
+      overlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      setBackgroundInert(true);
+      document.getElementById("download-warning-cancel").focus();
+
+      // Use the waiting time to prepare the PDF fonts and library.
+      ensureReportWebFonts(8000);
+      warmUpPdfExport();
+    }
+
+    function closeDownloadWarning({ restoreFocus = true } = {}) {
+      const overlay = document.getElementById("download-warning");
+      if (overlay.hidden) return;
+      clearInterval(downloadWarningTimer);
+      downloadWarningTimer = null;
+      overlay.hidden = true;
+      overlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      if (!document.getElementById("report-overlay").classList.contains("open")) setBackgroundInert(false);
+      if (restoreFocus && downloadWarningReturnFocus && typeof downloadWarningReturnFocus.focus === "function") {
+        downloadWarningReturnFocus.focus();
+      }
+      downloadWarningReturnFocus = null;
+    }
+
+    document.getElementById("download-warning-accept").addEventListener("click", event => {
+      if (event.currentTarget.disabled || downloadWarningTimer) return;
+      downloadWarningAcknowledged = true; // memory only: shown again after a refresh
+      closeDownloadWarning({ restoreFocus: false });
+      document.getElementById("open-grade-report").focus();
+      const options = pendingReportOptions;
+      pendingReportOptions = {};
+      openGradeReport(options);
+    });
+    document.getElementById("download-warning-cancel").addEventListener("click", () => closeDownloadWarning());
+    document.getElementById("download-warning").addEventListener("click", event => {
+      if (event.target.id === "download-warning") closeDownloadWarning();
+    });
+
+    // =====================================================================
+    // SAVE / LOAD (localStorage on this device)
+    // ---------------------------------------------------------------------
+    // Each student is saved under their PRN (case-insensitive). Saving again with the
+    // same PRN replaces the earlier save without asking. The saved data is the same
+    // compact, tamper-checked state used by share links, so a save keeps every grade,
+    // elective choice, semester examination, name and PRN, and keeps working when
+    // subjects are added to the curriculum later.
+    // =====================================================================
+    const SAVED_STUDENTS_KEY = "btech-cse-sgpa-calculator:saved-students:v1";
+
+    const savedStudentKey = prn => cleanText(prn).toUpperCase();
+
+    // Returns { KEY: { prn, name, savedAt, data } }, or null if storage can't be used
+    // (e.g. blocked by the browser or a private window).
+    function readSavedStudents() {
+      let raw;
+      try {
+        raw = window.localStorage.getItem(SAVED_STUDENTS_KEY);
+      } catch {
+        return null;
+      }
+      if (!raw) return {};
+      try {
+        const parsed = JSON.parse(raw);
+        const students = parsed && typeof parsed.students === "object" && parsed.students ? parsed.students : {};
+        const valid = {};
+        Object.values(students).forEach(record => {
+          if (!record || typeof record.data !== "string" || !cleanText(record.prn)) return;
+          valid[savedStudentKey(record.prn)] = {
+            prn: cleanText(record.prn),
+            name: cleanText(record.name),
+            savedAt: Number(record.savedAt) || 0,
+            data: record.data
+          };
+        });
+        return valid;
+      } catch {
+        return {}; // unreadable data is treated as "nothing saved"
+      }
+    }
+
+    // Throws if the browser refuses (storage blocked or full).
+    function writeSavedStudents(students) {
+      window.localStorage.setItem(SAVED_STUDENTS_KEY, JSON.stringify({ version: 1, students }));
+    }
+
+    function formatSavedAt(timestamp) {
+      if (!timestamp) return "";
+      try {
+        return new Date(timestamp).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+      } catch {
+        return "";
+      }
+    }
+
+    function saveCurrentStudent() {
+      const { prn, name } = currentShareDetails();
+      if (!prn || !name) {
+        const missing = missingStudentFields();
+        const dialogOpen = document.getElementById("report-overlay").classList.contains("open");
+        if (dialogOpen) {
+          STUDENT_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = "true"; });
+          updateReportActionState();
+          const first = STUDENT_FIELDS.map(([id]) => document.getElementById(id)).find(field => !cleanText(field.value));
+          if (first) first.focus();
+        } else {
+          // Name and PRN are entered in the Provisional Marksheet window.
+          requestGradeReport({ markMissing: true });
+        }
+        showSnackbar(`Enter ${missing.join(" and ")} before saving.`, true, 5000);
+        return false;
+      }
+
+      const students = readSavedStudents();
+      if (students === null) {
+        showSnackbar("Saving isn't available: this browser is blocking local storage.", true, 6000);
+        return false;
+      }
+
+      let data;
+      try {
+        data = encodeShareState();
+      } catch (error) {
+        console.error(error);
+        showSnackbar("Could not save the details.", true, 5000);
+        return false;
+      }
+
+      const key = savedStudentKey(prn);
+      const replaced = Boolean(students[key]);
+      students[key] = { prn, name, savedAt: Date.now(), data };
+      try {
+        writeSavedStudents(students);
+      } catch (error) {
+        console.error(error);
+        showSnackbar("Could not save: this browser's storage is full or blocked.", true, 6000);
+        return false;
+      }
+
+      showSnackbar(replaced
+        ? `Updated the saved details of ${name} (PRN ${prn}).`
+        : `Saved ${name} (PRN ${prn}) on this device.`, false, 4000);
+      return true;
+    }
+
+    // ---- Load popup ---------------------------------------------------------------
+    let loadDialogReturnFocus = null;
+    let pendingDeleteKey = null;
+    let deleteConfirmReturnFocus = null;
+
+    function renderSavedStudentList() {
+      const list = document.getElementById("store-list");
+      const intro = document.getElementById("load-dialog-intro");
+      const students = readSavedStudents();
+
+      if (students === null) {
+        intro.textContent = "Saved details can't be read: this browser is blocking local storage.";
+        list.innerHTML = "";
+        return;
+      }
+
+      const records = Object.entries(students).sort(([, a], [, b]) => b.savedAt - a.savedAt);
+      if (!records.length) {
+        intro.textContent = "Details saved on this device appear here.";
+        list.innerHTML = `<li class="store-empty">No saved students yet. Enter a student's name and PRN, then select Save.</li>`;
+        return;
+      }
+
+      intro.textContent = records.length === 1
+        ? "1 student saved on this device. Select it to open the details."
+        : `${records.length} students saved on this device. Select one to open their details.`;
+
+      list.innerHTML = records.map(([key, record]) => {
+        const name = record.name || "(no name)";
+        const savedAt = formatSavedAt(record.savedAt);
+        return `
+          <li class="store-item">
+            <button type="button" class="store-open" data-key="${escapeHtml(key)}"
+                    aria-label="Load ${escapeHtml(name)}, PRN ${escapeHtml(record.prn)}">
+              <span class="store-name">${escapeHtml(name)}</span>
+              <span class="store-meta">PRN <strong>${escapeHtml(record.prn)}</strong>${savedAt ? ` &nbsp;|&nbsp; Saved ${escapeHtml(savedAt)}` : ""}</span>
+            </button>
+            <button type="button" class="store-delete" data-key="${escapeHtml(key)}"
+                    aria-label="Delete ${escapeHtml(name)}, PRN ${escapeHtml(record.prn)}" title="Delete">
+              <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+                <path d="M4 6h12M8 6V4.5h4V6M6 6l.7 9.5h6.6L14 6M8.5 9v4.5M11.5 9v4.5" fill="none"
+                      stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </li>`;
+      }).join("");
+    }
+
+    function openLoadDialog() {
+      const overlay = document.getElementById("load-dialog");
+      loadDialogReturnFocus = document.activeElement;
+      CustomSelect.instances.forEach(select => select.close({ instant: true }));
+      renderSavedStudentList();
+      overlay.hidden = false;
+      overlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      setBackgroundInert(true);
+      const first = overlay.querySelector(".store-open") || document.getElementById("load-dialog-cancel");
+      first.focus();
+    }
+
+    function closeLoadDialog({ restoreFocus = true } = {}) {
+      const overlay = document.getElementById("load-dialog");
+      if (overlay.hidden) return;
+      closeDeleteConfirm({ restoreFocus: false });
+      overlay.hidden = true;
+      overlay.setAttribute("aria-hidden", "true");
+      if (!document.getElementById("report-overlay").classList.contains("open")) {
+        document.body.style.overflow = "";
+        setBackgroundInert(false);
+      }
+      if (restoreFocus && loadDialogReturnFocus && typeof loadDialogReturnFocus.focus === "function") {
+        loadDialogReturnFocus.focus();
+      }
+      loadDialogReturnFocus = null;
+    }
+
+    // Removes "s=…" from the address so a refresh doesn't bring back a previously opened link.
+    function clearShareParamFromUrl() {
+      const parts = window.location.hash.replace(/^#/, "").split("&").filter(Boolean);
+      const kept = parts.filter(part => !/^s=/.test(part));
+      if (kept.length === parts.length) return;
+      LOADED_SHARE_PARAM = "";
+      try {
+        const url = `${window.location.pathname}${window.location.search}${kept.length ? `#${kept.join("&")}` : ""}`;
+        window.history.replaceState(null, "", url);
+      } catch {
+        // address bar unchanged; the loaded details still apply
+      }
+    }
+
+    function loadSavedStudent(key) {
+      const students = readSavedStudents();
+      const record = students && students[key];
+      if (!record) {
+        showSnackbar("Those details are no longer saved on this device.", true, 5000);
+        renderSavedStudentList();
+        return;
+      }
+
+      const decoded = decodeShareState(record.data);
+      if (!decoded || !applyShareState(decoded)) {
+        showSnackbar(`Could not open the saved details of ${record.name || record.prn}.`, true, 6000);
+        return;
+      }
+
+      closeLoadDialog({ restoreFocus: false });
+      render();
+      applyShareDetails(decoded.details || { prn: record.prn, name: record.name });
+      clearShareParamFromUrl();
+      document.getElementById("load-student").focus();
+
+      const who = `${record.name || "Student"} (PRN ${record.prn})`;
+      if (decoded.skipped) {
+        showSnackbar(
+          `Loaded ${who}. ${decoded.skipped} grade${decoded.skipped === 1 ? " was" : "s were"} for subjects no longer listed and skipped.`,
+          false, 7000
+        );
+      } else {
+        showSnackbar(`Loaded ${who}.`, false, 3500);
+      }
+    }
+
+    // ---- Delete with confirmation ---------------------------------------------------
+    function askDeleteSavedStudent(key) {
+      const students = readSavedStudents();
+      const record = students && students[key];
+      if (!record) {
+        renderSavedStudentList();
+        return;
+      }
+      pendingDeleteKey = key;
+      deleteConfirmReturnFocus = document.activeElement;
+      document.getElementById("delete-confirm-text").textContent =
+        `${record.name || "This student"} (PRN ${record.prn}) will be removed from this device. This can't be undone.`;
+      const overlay = document.getElementById("delete-confirm");
+      overlay.hidden = false;
+      overlay.setAttribute("aria-hidden", "false");
+      document.getElementById("load-dialog").inert = true;
+      document.getElementById("delete-confirm-cancel").focus();
+    }
+
+    function closeDeleteConfirm({ restoreFocus = true } = {}) {
+      const overlay = document.getElementById("delete-confirm");
+      if (overlay.hidden) return;
+      overlay.hidden = true;
+      overlay.setAttribute("aria-hidden", "true");
+      document.getElementById("load-dialog").inert = false;
+      pendingDeleteKey = null;
+      if (restoreFocus && deleteConfirmReturnFocus && typeof deleteConfirmReturnFocus.focus === "function") {
+        deleteConfirmReturnFocus.focus();
+      }
+      deleteConfirmReturnFocus = null;
+    }
+
+    function confirmDeleteSavedStudent() {
+      const key = pendingDeleteKey;
+      const students = readSavedStudents();
+      const record = students && students[key];
+      closeDeleteConfirm({ restoreFocus: false });
+      if (!record) {
+        renderSavedStudentList();
+        return;
+      }
+
+      // Keep focus near where it was: the next row, or the previous one.
+      const keys = [...document.querySelectorAll("#store-list .store-delete")].map(button => button.dataset.key);
+      const index = keys.indexOf(key);
+      const nextKey = keys[index + 1] || keys[index - 1] || null;
+
+      delete students[key];
+      try {
+        writeSavedStudents(students);
+      } catch (error) {
+        console.error(error);
+        showSnackbar("Could not delete: this browser is blocking local storage.", true, 6000);
+        return;
+      }
+
+      renderSavedStudentList();
+      const next = nextKey && [...document.querySelectorAll("#store-list .store-delete")]
+        .find(button => button.dataset.key === nextKey);
+      (next || document.getElementById("load-dialog-cancel")).focus();
+      showSnackbar(`Deleted the saved details of ${record.name || "the student"} (PRN ${record.prn}).`, false, 4000);
+    }
+
+    document.getElementById("save-student").addEventListener("click", saveCurrentStudent);
+    document.getElementById("report-save-student").addEventListener("click", saveCurrentStudent);
+    document.getElementById("load-student").addEventListener("click", openLoadDialog);
+    document.getElementById("load-dialog-close").addEventListener("click", () => closeLoadDialog());
+    document.getElementById("load-dialog-cancel").addEventListener("click", () => closeLoadDialog());
+    document.getElementById("load-dialog").addEventListener("click", event => {
+      if (event.target.id === "load-dialog") closeLoadDialog();
+    });
+    document.getElementById("store-list").addEventListener("click", event => {
+      const remove = event.target.closest(".store-delete");
+      if (remove) {
+        askDeleteSavedStudent(remove.dataset.key);
+        return;
+      }
+      const open = event.target.closest(".store-open");
+      if (open) loadSavedStudent(open.dataset.key);
+    });
+    document.getElementById("delete-confirm-cancel").addEventListener("click", () => closeDeleteConfirm());
+    document.getElementById("delete-confirm-accept").addEventListener("click", confirmDeleteSavedStudent);
+    document.getElementById("delete-confirm").addEventListener("click", event => {
+      if (event.target.id === "delete-confirm") closeDeleteConfirm();
     });
 
     setupReportDetails();
@@ -7482,7 +8429,7 @@
       document.fonts.ready.then(() => positionSchemeIndicator({ instant: true }));
     }
 
-    // Show the marksheet tools only in admin mode (also preloads PDF resources for admins).
+    // Admin mode setup (also preloads PDF resources for admins).
     applyAdminMode();
   </script>
 </body>
