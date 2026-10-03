@@ -989,12 +989,6 @@
       text-transform: uppercase;
     }
 
-    .report-remark {
-      margin-top: 4mm;
-      font-size: 8.1pt;
-      line-height: 1.45;
-    }
-
     .report-note {
       margin-top: 2mm;
       font-size: 7.7pt;
@@ -1105,10 +1099,6 @@
 
     .report-page.report-dense .report-performance {
       margin-top: 3.5mm;
-    }
-
-    .report-page.report-dense .report-remark {
-      margin-top: 3mm;
     }
 
     @media (max-width: 900px) {
@@ -1430,7 +1420,6 @@
       border-right: 1px solid #333 !important;
     }
 
-    #grade-report-page .report-remark,
     #grade-report-page .report-note,
     #grade-report-page .report-footer {
       color: #000 !important;
@@ -1617,11 +1606,6 @@
     #grade-report-page.report-tight .report-performance td {
       padding-top: 1.15mm;
       padding-bottom: 1.15mm;
-    }
-
-    #grade-report-page.report-tight .report-remark {
-      margin-top: 2mm;
-      font-size: 7.5pt;
     }
 
     #grade-report-page.report-tight .report-note {
@@ -2027,7 +2011,7 @@
     }
 
     /* ===================================================================
-       Provisional Marksheet dialog: details, purpose, per-semester cards, viewer
+       Provisional Marksheet dialog: details, per-semester cards, viewer
        =================================================================== */
     .report-controls > .report-section:not(:first-child) { margin-top: 18px; }
 
@@ -2044,61 +2028,6 @@
       color: var(--danger);
       font-style: normal;
       margin-left: 2px;
-    }
-
-    .purpose-options {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 7px;
-    }
-
-    .purpose-option { position: relative; display: block; }
-
-    .purpose-option input {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    .purpose-option span {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 42px;
-      padding: 8px 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
-      background: #fff;
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 650;
-      line-height: 1.25;
-      text-align: center;
-      transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .2s ease;
-    }
-
-    .purpose-option:hover input:not(:checked) + span { border-color: #9ca3af; background: #fafafa; }
-
-    .purpose-option input:checked + span {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-
-    .purpose-option input:focus-visible + span {
-      box-shadow: 0 0 0 3px rgba(17, 24, 39, .18);
-    }
-
-    .purpose-hint {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 11.5px;
-      line-height: 1.4;
-      min-height: 1em;
     }
 
     .report-semester-list {
@@ -2671,6 +2600,27 @@
     .confirm-overlay { z-index: 2200; }
     .confirm-text { margin: 6px 0 20px !important; line-height: 1.45; }
 
+    /* Name + PRN popup (page load, Save, Submit to College). */
+    .details-overlay { z-index: 2150; }
+    .details-dialog { width: min(440px, 100%); }
+    .details-dialog .warn-intro[hidden] { display: none; }
+
+    .details-fields {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .details-fields .report-field { margin: 0; }
+
+    .details-error {
+      min-height: 18px;
+      margin: 8px 0 12px;
+      color: var(--danger);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
     .report-action-primary.is-danger {
       border-color: var(--danger);
       background: var(--danger);
@@ -2754,7 +2704,7 @@
                 <label class="report-field">
                   <span>Student's Name <em class="req" aria-hidden="true">*</em></span>
                   <input id="report-student-name" type="text" value="" autocomplete="name" maxlength="90"
-                         placeholder="Full name as on records" required>
+                         placeholder="Full name as per marksheet" required>
                 </label>
 
                 <label class="report-field">
@@ -2767,29 +2717,6 @@
             </div>
 
             <p class="report-submit-status" id="report-submit-status" aria-live="polite"></p>
-
-            <div class="report-section">
-              <div class="report-section-label" id="report-purpose-label">Purpose <em class="req" aria-hidden="true">*</em></div>
-              <div class="purpose-options" role="radiogroup" aria-labelledby="report-purpose-label">
-                <label class="purpose-option">
-                  <input type="radio" name="report-purpose" value="Swadhar Yojana">
-                  <span>Swadhar Yojana</span>
-                </label>
-                <label class="purpose-option">
-                  <input type="radio" name="report-purpose" value="Credit Calculation">
-                  <span>Credit Calculation</span>
-                </label>
-                <label class="purpose-option">
-                  <input type="radio" name="report-purpose" value="Scholarship">
-                  <span>Scholarship</span>
-                </label>
-                <label class="purpose-option">
-                  <input type="radio" name="report-purpose" value="Marksheet Preparation">
-                  <span>Marksheet Preparation</span>
-                </label>
-              </div>
-              <div class="purpose-hint" id="report-purpose-hint" aria-live="polite"></div>
-            </div>
 
             <div class="report-section">
               <div class="report-section-label">Semesters</div>
@@ -2863,7 +2790,6 @@
                     </tbody>
                   </table>
 
-                  <div class="report-remark" id="pdf-remark"></div>
                   <div class="report-note">
                     The above statement of marks is prepared on the basis of TR copy received from Dr. Babasaheb Ambedkar
                     Technological University, Lonere, subject to correction, if any.
@@ -2947,6 +2873,32 @@
       <div class="warn-actions">
         <button class="report-action-secondary" id="delete-confirm-cancel" type="button">Cancel</button>
         <button class="report-action-primary is-danger" id="delete-confirm-accept" type="button">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Name + PRN popup: shown on page load (with Skip), and before Save / Submit to College. -->
+  <div class="warn-overlay details-overlay" id="student-popup" aria-hidden="true" hidden>
+    <div class="warn-dialog details-dialog" role="dialog" aria-modal="true"
+         aria-labelledby="student-popup-title" aria-describedby="student-popup-intro">
+      <h2 id="student-popup-title">Your details</h2>
+      <p class="warn-intro" id="student-popup-intro"></p>
+      <div class="details-fields">
+        <label class="report-field">
+          <span>Student's Name <em class="req" aria-hidden="true">*</em></span>
+          <input id="popup-student-name" type="text" autocomplete="name" maxlength="90"
+                 placeholder="Full name as per marksheet">
+        </label>
+        <label class="report-field">
+          <span>PRN <em class="req" aria-hidden="true">*</em></span>
+          <input id="popup-prn" type="text" autocomplete="off" maxlength="24" spellcheck="false"
+                 placeholder="Enter your PRN">
+        </label>
+      </div>
+      <div class="details-error" id="student-popup-error" aria-live="polite"></div>
+      <div class="warn-actions">
+        <button class="report-action-secondary" id="student-popup-secondary" type="button">Skip</button>
+        <button class="report-action-primary" id="student-popup-primary" type="button">Continue</button>
       </div>
     </div>
   </div>
@@ -5279,8 +5231,6 @@
 
     // Semester being exported from the marksheet dialog (null = the semester open on screen).
     let reportSemesterOverride = null;
-    // Purpose chosen in the dialog; printed on the marksheet as the Remark.
-    let reportPurpose = "";
 
     function reportSemesterObject() {
       const semesterId = reportSemesterOverride !== null
@@ -5294,10 +5244,6 @@
     // Year printed on the marksheet: worked out from the semester (Sem 1–2 First, 3–4 Second, …).
     function reportYearFor(semester) {
       return defaultYearForSemester(semester.id);
-    }
-
-    function reportPurposeRemark() {
-      return reportPurpose ? `Remark: Issued for the purpose of ${reportPurpose}.` : "";
     }
 
     function resolvedReportSubject(schemeKey, semester, subject, index) {
@@ -5781,16 +5727,6 @@
           updateReportActionState();
         });
       });
-
-      // Purpose (printed as the Remark on the marksheet).
-      document.querySelectorAll('input[name="report-purpose"]').forEach(radio => {
-        radio.addEventListener("change", () => {
-          if (!radio.checked) return;
-          reportPurpose = radio.value;
-          scheduleGradeReportRender();
-          updateReportActionState();
-        });
-      });
     }
 
     // Semester and Year come from the semester tabs, so only the button state needs refreshing.
@@ -5815,26 +5751,18 @@
       const missing = missingStudentFields();
       const schemeKey = state.activeScheme;
 
-      // PDF / JPG / View need the name, PRN, a purpose and that semester's examination.
+      // PDF / JPG / View need the name, PRN and that semester's examination.
       // (The viewer's PDF / JPG buttons have no data-semester: they use the semester on view.)
       document.querySelectorAll(".sem-export-btn").forEach(button => {
         const semesterId = button.dataset.semester ? Number(button.dataset.semester) : reportViewSemesterId;
         const examMissing = semesterId === null || !getSemesterExam(schemeKey, semesterId);
-        button.disabled = reportExportBusy || missing.length > 0 || !reportPurpose || examMissing;
+        button.disabled = reportExportBusy || missing.length > 0 || examMissing;
       });
 
       const detailsHint = document.getElementById("report-details-hint");
       if (detailsHint) {
         const text = missing.length ? `Fill in ${missing.join(" and ")} to enable PDF, JPG and View.` : "";
         if (detailsHint.textContent !== text) detailsHint.textContent = text;
-      }
-
-      const purposeHint = document.getElementById("report-purpose-hint");
-      if (purposeHint) {
-        const text = reportPurpose
-          ? `Printed below the table as: ${reportPurposeRemark()}`
-          : "Select a purpose to enable PDF, JPG and View.";
-        if (purposeHint.textContent !== text) purposeHint.textContent = text;
       }
 
       // Per-semester examination: hint + red outline once the student has interacted.
@@ -5952,12 +5880,6 @@
         cumResult && cumResult.cgpa !== null
           ? formatGpa(cumResult.cgpa)
           : "-";
-
-      // Remark below the table: the purpose chosen in the dialog.
-      const remark = document.getElementById("pdf-remark");
-      const remarkText = reportPurposeRemark();
-      remark.textContent = remarkText;
-      remark.style.display = remarkText ? "block" : "none";
 
       if (reportPreviewWanted) fitReportPreview();
     }
@@ -6189,7 +6111,7 @@
       }
 
       // Focus the first thing still needed: name / PRN, a semester's examination,
-      // the purpose, then the first download button.
+      // then the first download button.
       const emptyField = STUDENT_FIELDS
         .map(([id]) => document.getElementById(id))
         .find(field => !cleanText(field.value));
@@ -6198,9 +6120,7 @@
         .find(id => !getSemesterExam(state.activeScheme, id));
       const target = emptyField
         || (examMissingFor !== undefined ? semesterExamControl(examMissingFor) : null)
-        || (!reportPurpose ? document.querySelector('input[name="report-purpose"]') : null)
         || document.querySelector("#report-semester-list .sem-export-btn:not(:disabled)")
-        || document.querySelector('input[name="report-purpose"]:checked')
         || document.getElementById("close-grade-report");
       if (target) target.focus({ preventScroll: true });
 
@@ -6725,13 +6645,11 @@
         const cells = [...row.children].map(cell => cell.textContent.trim());
         return { code: cells[0] || "-", name: cells[1] || "-", credits: cells[2] || "0", grade: cells[3] || "-" };
       });
-      const remarkEl = document.getElementById("pdf-remark");
       return {
         info,
         subjects,
         sgpa: document.getElementById("pdf-sgpa").textContent.trim() || "-",
         cgpa: document.getElementById("pdf-cgpa").textContent.trim() || "-",
-        remark: remarkEl && remarkEl.style.display !== "none" ? remarkEl.textContent.trim() : "",
         note: "The above statement of marks is prepared on the basis of TR copy received from Dr. Babasaheb Ambedkar Technological University, Lonere, subject to correction, if any."
       };
     }
@@ -6836,11 +6754,6 @@
       y += t(compact ? 14 : 18);
       // fillText() positions text by its baseline, so offset by the font size
       // to keep the text below the SGPA/CGPA table instead of overlapping it.
-      if (model.remark) {
-        const remarkSize = t(compact ? 17 : 19);
-        safeSetFont(ctx, remarkSize, 700);
-        y += safeDrawWrapped(ctx, model.remark, contentLeft, y + remarkSize, contentWidth, t(compact ? 21 : 24), 2) + t(8);
-      }
       const noteSize = t(compact ? 16 : 18);
       y += t(compact ? 14 : 20); // extra breathing room above the TR-copy statement
       safeSetFont(ctx, noteSize, 400);
@@ -7498,7 +7411,7 @@
       // a text PDF, so the caller makes an image PDF instead (the browser draws every script).
       const reportTexts = [
         ...model.info.flat(), ...model.subjects.flatMap(item => [item.code, item.name, item.credits, item.grade]),
-        model.sgpa, model.cgpa, model.remark, model.note
+        model.sgpa, model.cgpa, model.note
       ];
       const unsupported = reportTexts.some(text => [...String(text || "")].some(ch => /\S/.test(ch) &&
         !(layoutFonts.regular.hasGlyphForCodePoint(ch.codePointAt(0)) && layoutFonts.bold.hasGlyphForCodePoint(ch.codePointAt(0)))));
@@ -7549,7 +7462,7 @@
       showSnackbar(message, isError, busy ? 0 : (isError ? 6000 : 3500));
     }
 
-    // Name, PRN, this semester's examination and a purpose are all needed before
+    // Name, PRN and this semester's examination are all needed before
     // a semester can be downloaded or viewed. Guides the student to what's missing.
     function reportDetailsReady(semesterId) {
       const missing = updateReportActionState();
@@ -7570,12 +7483,6 @@
         showSnackbar(`Select the examination for Semester ${semesterId} first.`, true, 5000);
         const control = semesterExamControl(semesterId);
         if (control) control.focus();
-        return false;
-      }
-      if (!reportPurpose) {
-        showSnackbar("Select the purpose first (Swadhar Yojana, Credit Calculation, Scholarship or Marksheet Preparation).", true, 5000);
-        const firstPurpose = document.querySelector('input[name="report-purpose"]');
-        if (firstPurpose) firstPurpose.focus();
         return false;
       }
       return true;
@@ -7721,6 +7628,10 @@
     });
 
     document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !document.getElementById("student-popup").hidden) {
+        closeStudentPopup();
+        return;
+      }
       if (event.key === "Escape" && !document.getElementById("delete-confirm").hidden) {
         closeDeleteConfirm();
         return;
@@ -7907,6 +7818,7 @@
         return false;
       }
 
+      // Name and PRN are required: a submission is never sent without them.
       const { prn, name } = currentShareDetails();
       if (!prn || !name) {
         if (automatic) {
@@ -7914,9 +7826,7 @@
           const first = STUDENT_FIELDS.map(([id]) => document.getElementById(id)).find(field => !cleanText(field.value));
           if (first) first.focus();
         } else {
-          // Name and PRN are entered in the Provisional Marksheet window.
-          requestGradeReport({ markMissing: true });
-          showSnackbar("Enter your name and PRN in the Provisional Marksheet window first.", true, 6000);
+          openStudentPopup("submit");
         }
         return false;
       }
@@ -7975,7 +7885,20 @@
       }
     }
 
-    submitButton.addEventListener("click", () => submitToCollege());
+    // "Submit to College": check the grades first, then ask for the name and PRN in a popup.
+    // The popup's Submit button sends it (see confirmStudentPopup).
+    submitButton.addEventListener("click", () => {
+      if (submitInFlight) {
+        showSnackbar("A submission is already being sent. Please wait a moment.", false, 3000);
+        return;
+      }
+      if (isCurrentStateSubmitted()) {
+        showSnackbar("Already submitted to college. Change a grade or detail to submit again.", false, 4500);
+        return;
+      }
+      if (!gradesReadyToSubmit()) return;
+      openStudentPopup("submit");
+    });
 
     // ---- Copy Link (toolbar) --------------------------------------------------------
     async function copyShareLink() {
@@ -8151,11 +8074,10 @@
           updateReportActionState();
           const first = STUDENT_FIELDS.map(([id]) => document.getElementById(id)).find(field => !cleanText(field.value));
           if (first) first.focus();
+          showSnackbar(`Enter ${missing.join(" and ")} before saving.`, true, 5000);
         } else {
-          // Name and PRN are entered in the Provisional Marksheet window.
-          requestGradeReport({ markMissing: true });
+          openStudentPopup("save");
         }
-        showSnackbar(`Enter ${missing.join(" and ")} before saving.`, true, 5000);
         return false;
       }
 
@@ -8298,6 +8220,7 @@
       }
 
       closeLoadDialog({ restoreFocus: false });
+      examUi.clear(); // dropdowns are rebuilt from the loaded examinations
       render();
       applyShareDetails(decoded.details || { prn: record.prn, name: record.name });
       clearShareParamFromUrl();
@@ -8377,7 +8300,8 @@
       showSnackbar(`Deleted the saved details of ${record.name || "the student"} (PRN ${record.prn}).`, false, 4000);
     }
 
-    document.getElementById("save-student").addEventListener("click", saveCurrentStudent);
+    // Toolbar Save: ask for the name and PRN first (no download warning).
+    document.getElementById("save-student").addEventListener("click", () => openStudentPopup("save"));
     document.getElementById("report-save-student").addEventListener("click", saveCurrentStudent);
     document.getElementById("load-student").addEventListener("click", openLoadDialog);
     document.getElementById("load-dialog-close").addEventListener("click", () => closeLoadDialog());
@@ -8398,6 +8322,154 @@
     document.getElementById("delete-confirm-accept").addEventListener("click", confirmDeleteSavedStudent);
     document.getElementById("delete-confirm").addEventListener("click", event => {
       if (event.target.id === "delete-confirm") closeDeleteConfirm();
+    });
+
+    // =====================================================================
+    // NAME + PRN POPUP
+    // ---------------------------------------------------------------------
+    // start  : on page load, with Skip (checking grades needs no details)
+    // save   : before saving to this device
+    // submit : before submitting to the college
+    // The values are copied into the Student's Name / PRN fields of the marksheet
+    // window, which are what saving, submitting and the downloads use.
+    // =====================================================================
+    const STUDENT_POPUP_MODES = {
+      start: {
+        title: "Your details",
+        intro: "",
+        primary: "Continue",
+        secondary: "Skip",
+        missing: "Enter your name and PRN, or select Skip."
+      },
+      save: {
+        title: "Save details",
+        intro: "Saved on this device under your PRN, with your grades and each semester's examination. Saving again with the same PRN replaces the earlier save.",
+        primary: "Save",
+        secondary: "Cancel",
+        missing: "Enter your name and PRN to save."
+      },
+      submit: {
+        title: "Submit to college",
+        intro: "Your grades are sent to the college with your name and PRN.",
+        primary: "Submit",
+        secondary: "Cancel",
+        missing: "Enter your name and PRN to submit."
+      }
+    };
+
+    let studentPopupMode = null;
+    let studentPopupReturnFocus = null;
+
+    function setStudentDetails(name, prn) {
+      document.getElementById("report-student-name").value = name;
+      document.getElementById("report-prn").value = prn;
+      STUDENT_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = ""; });
+      scheduleGradeReportRender();
+      updateReportActionState();
+    }
+
+    function openStudentPopup(mode) {
+      const config = STUDENT_POPUP_MODES[mode];
+      const overlay = document.getElementById("student-popup");
+      if (!config) return;
+      studentPopupMode = mode;
+      if (overlay.hidden) studentPopupReturnFocus = document.activeElement;
+      CustomSelect.instances.forEach(select => select.close({ instant: true }));
+
+      document.getElementById("student-popup-title").textContent = config.title;
+      // No description line when the mode has none (the page-load popup).
+      const intro = document.getElementById("student-popup-intro");
+      intro.textContent = config.intro;
+      intro.hidden = !config.intro;
+      const dialog = document.querySelector("#student-popup .details-dialog");
+      if (config.intro) dialog.setAttribute("aria-describedby", "student-popup-intro");
+      else dialog.removeAttribute("aria-describedby");
+      document.getElementById("student-popup-primary").textContent = config.primary;
+      document.getElementById("student-popup-secondary").textContent = config.secondary;
+      document.getElementById("student-popup-error").textContent = "";
+
+      // Pre-filled with whatever was entered before.
+      const nameInput = document.getElementById("popup-student-name");
+      const prnInput = document.getElementById("popup-prn");
+      nameInput.value = cleanText(document.getElementById("report-student-name").value);
+      prnInput.value = cleanText(document.getElementById("report-prn").value);
+      [nameInput, prnInput].forEach(input => {
+        input.classList.remove("is-invalid");
+        input.setAttribute("aria-invalid", "false");
+      });
+
+      overlay.hidden = false;
+      overlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      setBackgroundInert(true);
+      const empty = [nameInput, prnInput].find(input => !input.value);
+      (empty || document.getElementById("student-popup-primary")).focus();
+    }
+
+    function closeStudentPopup({ restoreFocus = true } = {}) {
+      const overlay = document.getElementById("student-popup");
+      if (overlay.hidden) return;
+      overlay.hidden = true;
+      overlay.setAttribute("aria-hidden", "true");
+      studentPopupMode = null;
+      if (!document.getElementById("report-overlay").classList.contains("open")) {
+        document.body.style.overflow = "";
+        setBackgroundInert(false);
+      }
+      if (restoreFocus && studentPopupReturnFocus && typeof studentPopupReturnFocus.focus === "function"
+          && studentPopupReturnFocus !== document.body) {
+        studentPopupReturnFocus.focus();
+      }
+      studentPopupReturnFocus = null;
+    }
+
+    function confirmStudentPopup() {
+      const mode = studentPopupMode;
+      const config = STUDENT_POPUP_MODES[mode];
+      if (!config) return;
+      const nameInput = document.getElementById("popup-student-name");
+      const prnInput = document.getElementById("popup-prn");
+      const name = cleanText(nameInput.value);
+      const prn = cleanText(prnInput.value);
+
+      [[nameInput, name], [prnInput, prn]].forEach(([input, value]) => {
+        input.classList.toggle("is-invalid", !value);
+        input.setAttribute("aria-invalid", String(!value));
+      });
+      if (!name || !prn) {
+        document.getElementById("student-popup-error").textContent = config.missing;
+        (!name ? nameInput : prnInput).focus();
+        return;
+      }
+
+      setStudentDetails(name, prn);
+      closeStudentPopup({ restoreFocus: mode !== "start" });
+      if (mode === "save") saveCurrentStudent();
+      else if (mode === "submit") submitToCollege();
+    }
+
+    ["popup-student-name", "popup-prn"].forEach(id => {
+      const input = document.getElementById(id);
+      input.addEventListener("input", () => {
+        if (cleanText(input.value)) {
+          input.classList.remove("is-invalid");
+          input.setAttribute("aria-invalid", "false");
+        }
+        const bothFilled = ["popup-student-name", "popup-prn"]
+          .every(other => cleanText(document.getElementById(other).value));
+        if (bothFilled) document.getElementById("student-popup-error").textContent = "";
+      });
+      input.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          confirmStudentPopup();
+        }
+      });
+    });
+    document.getElementById("student-popup-primary").addEventListener("click", confirmStudentPopup);
+    document.getElementById("student-popup-secondary").addEventListener("click", () => closeStudentPopup());
+    document.getElementById("student-popup").addEventListener("click", event => {
+      if (event.target.id === "student-popup") closeStudentPopup();
     });
 
     setupReportDetails();
@@ -8421,6 +8493,9 @@
 
     render();
     if (sharedApplied) applyShareDetails(shared.details);
+
+    // Ask for the name and PRN on page load; Skip lets students just check their grades.
+    if (missingStudentFields().length) openStudentPopup("start");
 
     // Enable motion only after the first paint, so the page doesn't animate on load.
     requestAnimationFrame(() => requestAnimationFrame(() => { animationsReady = true; }));
