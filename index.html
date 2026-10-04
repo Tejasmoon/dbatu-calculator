@@ -2600,6 +2600,27 @@
     .confirm-overlay { z-index: 2200; }
     .confirm-text { margin: 6px 0 20px !important; line-height: 1.45; }
 
+    /* "Submitted to College": disabled, green, with a check mark. */
+    .share-btn.is-submitted,
+    .share-btn.is-submitted:disabled {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-color: #a6e9c1;
+      background: #ecfdf3;
+      color: #067647;
+      opacity: 1;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .share-btn.is-submitted .submit-check {
+      flex: none;
+      color: #12b76a;
+    }
+
     /* Name + PRN popup (page load, Save, Submit to College). */
     .details-overlay { z-index: 2150; }
     .details-dialog { width: min(440px, 100%); }
@@ -2675,9 +2696,9 @@
       <div class="share-area">
         <button class="report-open-btn" id="open-grade-report" type="button">Provisional Marksheet</button>
         <button class="report-open-btn store-btn" id="save-student" type="button"
-                title="Save this student's details on this device">Save</button>
+                title="Save this student's details on this device">Save to Device</button>
         <button class="report-open-btn store-btn" id="load-student" type="button"
-                title="Open details saved on this device">Load</button>
+                title="Open details saved on this device">Load from Device</button>
         <button class="share-btn" id="copy-share-link" type="button">Copy Link</button>
         <button class="share-btn" id="submit-share-link" type="button">Submit to College</button>
       </div>
@@ -2835,6 +2856,7 @@
       <ol class="warn-list" id="download-warning-list">
         <li><strong>Ensure all the grades are correctly entered.</strong></li>
         <li>You will be <strong>responsible for your own loss</strong> if any grades are incorrectly entered.</li>
+        <li><strong>Double-check once again</strong> all the subjects and their grades.</li>
         <li>Saving as <strong>PDF or JPG will automatically submit</strong> your grades to the college.</li>
       </ol>
       <div class="warn-actions">
@@ -7788,7 +7810,18 @@
       const submitted = isCurrentStateSubmitted();
       if (button) {
         button.disabled = submitInFlight || submitted;
-        button.textContent = submitInFlight ? "Submitting…" : submitted ? "Submitted to College" : "Submit to College";
+        button.classList.toggle("is-submitted", submitted && !submitInFlight);
+        const state = submitInFlight ? "sending" : submitted ? "done" : "idle";
+        if (button.dataset.state !== state) {
+          button.dataset.state = state;
+          button.innerHTML = state === "sending"
+            ? "Submitting…"
+            : state === "done"
+              ? '<svg class="submit-check" viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">' +
+                '<path d="M4.5 10.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2.4" ' +
+                'stroke-linecap="round" stroke-linejoin="round"/></svg><span>Submitted to College</span>'
+              : "Submit to College";
+        }
         button.title = submitted ? "Already submitted. Change a grade or detail to submit again." : "";
       }
       const status = document.getElementById("report-submit-status");
@@ -7799,8 +7832,8 @@
         status.textContent = admin
           ? "Admin mode: downloads are not submitted to the college."
           : submitted
-            ? "Submitted to the college. Downloading again will not resubmit unless you change something."
-            : "Saving as PDF or JPG will first submit your grades to the college.";
+            ? "Data successfully submitted to the college."
+            : "Saving as PDF or JPG will submit your grades to the college.";
       }
     }
 
