@@ -1983,28 +1983,6 @@
       .exam-trigger { transition: none !important; }
     }
 
-    /* Student's Name + PRN at the top of the marksheet dialog. */
-    .report-student-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-      gap: 12px 14px;
-    }
-
-    .report-student-grid .report-field { margin: 0; min-width: 0; }
-
-    @media (max-width: 520px) {
-      .report-student-grid { grid-template-columns: 1fr; }
-    }
-
-    .report-details-hint {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 11.5px;
-      line-height: 1.4;
-    }
-
-    .report-details-hint:empty { display: none; }
-
     .report-open-btn:disabled {
       opacity: .5;
       cursor: not-allowed;
@@ -2500,6 +2478,7 @@
     }
 
     .report-dialog-footer { gap: 8px; }
+    .report-controls > .report-submit-status:first-child { margin-top: 0 !important; }
     .report-dialog-footer #report-save-student { margin-right: auto; }
 
     .store-dialog { width: min(520px, 100%); }
@@ -2600,6 +2579,44 @@
     .confirm-overlay { z-index: 2200; }
     .confirm-text { margin: 6px 0 20px !important; line-height: 1.45; }
 
+    /* Entered student's name, under the page title. */
+    .student-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      max-width: 100%;
+      margin-top: 10px;
+      padding: 6px 13px 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .student-chip[hidden] { display: none; }
+    .student-chip:hover { border-color: #9ca3af; }
+
+    .student-chip:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, .18);
+    }
+
+    .student-chip-icon { flex: none; color: var(--muted); }
+
+    .student-chip-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 700px) {
+      .student-chip { margin-top: 8px; font-size: 13px; }
+    }
+
     /* "Submitted to College": disabled, green, with a check mark. */
     .share-btn.is-submitted,
     .share-btn.is-submitted:disabled {
@@ -2663,6 +2680,16 @@
         >Direct Second Year</span>
       </div>
       <p>B.Tech. Computer Science and Engineering</p>
+      <!-- Shown once a name has been entered; selecting it lets the student change name / PRN. -->
+      <button class="student-chip" id="student-chip" type="button" hidden
+              title="Change name or PRN">
+        <svg class="student-chip-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+          <circle cx="10" cy="7" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M3.8 16.5c.9-3 3.3-4.6 6.2-4.6s5.3 1.6 6.2 4.6" fill="none" stroke="currentColor"
+                stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        <span class="student-chip-name" id="student-chip-name"></span>
+      </button>
     </header>
 
     <!-- Tabs are generated from CURRICULA (one per scheme). -->
@@ -2719,24 +2746,6 @@
 
         <div class="report-builder-body">
           <aside class="report-controls" id="report-controls">
-            <!-- Student details: printed on every marksheet and included in share links. -->
-            <div class="report-section">
-              <div class="report-student-grid">
-                <label class="report-field">
-                  <span>Student's Name <em class="req" aria-hidden="true">*</em></span>
-                  <input id="report-student-name" type="text" value="" autocomplete="name" maxlength="90"
-                         placeholder="Full name as per marksheet" required>
-                </label>
-
-                <label class="report-field">
-                  <span>PRN <em class="req" aria-hidden="true">*</em></span>
-                  <input id="report-prn" type="text" value="" autocomplete="off" maxlength="24"
-                         spellcheck="false" placeholder="Enter your PRN" required>
-                </label>
-              </div>
-              <div class="report-details-hint" id="report-details-hint" aria-live="polite"></div>
-            </div>
-
             <p class="report-submit-status" id="report-submit-status" aria-live="polite"></p>
 
             <div class="report-section">
@@ -2748,6 +2757,11 @@
               <button class="report-action-secondary" id="report-save-student" type="button">Save details</button>
               <button class="report-action-secondary" id="report-footer-close" type="button">Close</button>
             </div>
+
+            <!-- Student's Name and PRN (entered in the name/PRN popup): printed on every
+                 marksheet, saved, submitted and included in share links. -->
+            <input type="hidden" id="report-student-name" value="">
+            <input type="hidden" id="report-prn" value="">
           </aside>
 
           <section class="report-viewer" id="report-viewer" aria-labelledby="report-view-title" hidden>
@@ -5736,20 +5750,9 @@
     // ---------------------------------------------------------------------
     const YEAR_OPTIONS = [["FIRST", "First Year"], ["SECOND", "Second Year"], ["THIRD", "Third Year"], ["FOURTH", "Fourth Year"]];
 
-    function setupReportDetails() {
-      ["report-prn", "report-student-name"].forEach(id => {
-        const field = document.getElementById(id);
-        field.addEventListener("input", () => {
-          scheduleGradeReportRender();
-          updateReportActionState();
-        });
-        // Mark as touched once the user leaves it, so an empty field gets a red outline.
-        field.addEventListener("blur", () => {
-          field.dataset.touched = "true";
-          updateReportActionState();
-        });
-      });
-    }
+    // Name and PRN are entered only in the name/PRN popup (setStudentDetails),
+    // which also refreshes the report and the buttons.
+    function setupReportDetails() {}
 
     // Semester and Year come from the semester tabs, so only the button state needs refreshing.
     function syncReportFields() {
@@ -5769,9 +5772,22 @@
         .map(([, label]) => label);
     }
 
+    // Shows the entered name under the page title (hidden while no name is entered).
+    function updateStudentChip() {
+      const chip = document.getElementById("student-chip");
+      const nameField = document.getElementById("report-student-name");
+      if (!chip || !nameField) return;
+      const name = cleanText(nameField.value);
+      chip.hidden = !name;
+      const label = document.getElementById("student-chip-name");
+      if (label.textContent !== name) label.textContent = name;
+      chip.setAttribute("aria-label", name ? `Student: ${name}. Change name or PRN` : "");
+    }
+
     function updateReportActionState() {
       const missing = missingStudentFields();
       const schemeKey = state.activeScheme;
+      updateStudentChip();
 
       // PDF / JPG / View need the name, PRN and that semester's examination.
       // (The viewer's PDF / JPG buttons have no data-semester: they use the semester on view.)
@@ -5780,12 +5796,6 @@
         const examMissing = semesterId === null || !getSemesterExam(schemeKey, semesterId);
         button.disabled = reportExportBusy || missing.length > 0 || examMissing;
       });
-
-      const detailsHint = document.getElementById("report-details-hint");
-      if (detailsHint) {
-        const text = missing.length ? `Fill in ${missing.join(" and ")} to enable PDF, JPG and View.` : "";
-        if (detailsHint.textContent !== text) detailsHint.textContent = text;
-      }
 
       // Per-semester examination: hint + red outline once the student has interacted.
       document.querySelectorAll("#report-semester-list .sem-card[data-semester]").forEach(card => {
@@ -5809,14 +5819,6 @@
             : "Select the examination to enable PDF, JPG and View.";
           if (hint.textContent !== text) hint.textContent = text;
         }
-      });
-
-      // Red outline on the name / PRN only after the user has interacted with the field.
-      STUDENT_FIELDS.forEach(([id]) => {
-        const field = document.getElementById(id);
-        const empty = !cleanText(field.value);
-        field.classList.toggle("is-invalid", empty && field.dataset.touched === "true");
-        field.setAttribute("aria-invalid", empty ? "true" : "false");
       });
 
       refreshSubmitState();
@@ -6108,8 +6110,8 @@
       applyAdminMode();
     });
 
-    // Opens the marksheet dialog. markMissing: outline an empty name / PRN in red right away.
-    function openGradeReport({ markMissing = false } = {}) {
+    // Opens the marksheet dialog (name and PRN are already entered: see requestGradeReport).
+    function openGradeReport() {
       const overlay = document.getElementById("report-overlay");
       clearTimeout(reportCloseTimer); // reopened while the close animation was playing
       overlay.classList.remove("is-closing");
@@ -6127,21 +6129,11 @@
       renderGradeReport();
       renderReportSemesterList();
 
-      if (markMissing) {
-        STUDENT_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = "true"; });
-        updateReportActionState();
-      }
-
-      // Focus the first thing still needed: name / PRN, a semester's examination,
-      // then the first download button.
-      const emptyField = STUDENT_FIELDS
-        .map(([id]) => document.getElementById(id))
-        .find(field => !cleanText(field.value));
+      // Focus the first thing still needed: a semester's examination, then the first download button.
       const examMissingFor = [...document.querySelectorAll("#report-semester-list .sem-card[data-semester]")]
         .map(card => Number(card.dataset.semester))
         .find(id => !getSemesterExam(state.activeScheme, id));
-      const target = emptyField
-        || (examMissingFor !== undefined ? semesterExamControl(examMissingFor) : null)
+      const target = (examMissingFor !== undefined ? semesterExamControl(examMissingFor) : null)
         || document.querySelector("#report-semester-list .sem-export-btn:not(:disabled)")
         || document.getElementById("close-grade-report");
       if (target) target.focus({ preventScroll: true });
@@ -7489,11 +7481,7 @@
     function reportDetailsReady(semesterId) {
       const missing = updateReportActionState();
       if (missing.length) {
-        STUDENT_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = "true"; });
-        updateReportActionState();
-        showSnackbar(`Please fill in: ${missing.join(", ")}.`, true, 5000);
-        const first = STUDENT_FIELDS.map(([id]) => document.getElementById(id)).find(field => !cleanText(field.value));
-        if (first) first.focus();
+        openStudentPopup("edit");
         return false;
       }
       if (!getSemesterExam(state.activeScheme, semesterId)) {
@@ -7854,13 +7842,7 @@
       // Name and PRN are required: a submission is never sent without them.
       const { prn, name } = currentShareDetails();
       if (!prn || !name) {
-        if (automatic) {
-          showSnackbar(`${prefix}Enter your name and PRN before submitting.`, true, 5000);
-          const first = STUDENT_FIELDS.map(([id]) => document.getElementById(id)).find(field => !cleanText(field.value));
-          if (first) first.focus();
-        } else {
-          openStudentPopup("submit");
-        }
+        openStudentPopup(automatic ? "edit" : "submit");
         return false;
       }
 
@@ -7964,15 +7946,18 @@
     const DOWNLOAD_WARNING_SECONDS = 15;
     let downloadWarningTimer = null;
     let downloadWarningReturnFocus = null;
-    let pendingReportOptions = {};
 
-    // Main button: the warning (once per page load), then the dialog.
-    function requestGradeReport(options = {}) {
-      if (isAdminMode() || downloadWarningAcknowledged) {
-        openGradeReport(options);
+    // Main button: the name/PRN popup (if not entered yet), then the warning
+    // (once per page load), then the dialog.
+    function requestGradeReport() {
+      if (missingStudentFields().length) {
+        openStudentPopup("marksheet");
         return;
       }
-      pendingReportOptions = options;
+      if (isAdminMode() || downloadWarningAcknowledged) {
+        openGradeReport();
+        return;
+      }
       openDownloadWarning();
     }
 
@@ -8032,9 +8017,7 @@
       downloadWarningAcknowledged = true; // memory only: shown again after a refresh
       closeDownloadWarning({ restoreFocus: false });
       document.getElementById("open-grade-report").focus();
-      const options = pendingReportOptions;
-      pendingReportOptions = {};
-      openGradeReport(options);
+      openGradeReport();
     });
     document.getElementById("download-warning-cancel").addEventListener("click", () => closeDownloadWarning());
     document.getElementById("download-warning").addEventListener("click", event => {
@@ -8100,17 +8083,7 @@
     function saveCurrentStudent() {
       const { prn, name } = currentShareDetails();
       if (!prn || !name) {
-        const missing = missingStudentFields();
-        const dialogOpen = document.getElementById("report-overlay").classList.contains("open");
-        if (dialogOpen) {
-          STUDENT_FIELDS.forEach(([id]) => { document.getElementById(id).dataset.touched = "true"; });
-          updateReportActionState();
-          const first = STUDENT_FIELDS.map(([id]) => document.getElementById(id)).find(field => !cleanText(field.value));
-          if (first) first.focus();
-          showSnackbar(`Enter ${missing.join(" and ")} before saving.`, true, 5000);
-        } else {
-          openStudentPopup("save");
-        }
+        openStudentPopup("save");
         return false;
       }
 
@@ -8377,6 +8350,20 @@
         secondary: "Cancel",
         missing: "Enter your name and PRN to save."
       },
+      marksheet: {
+        title: "Provisional marksheet",
+        intro: "Your name and PRN are printed on the marksheet.",
+        primary: "Continue",
+        secondary: "Cancel",
+        missing: "Enter your name and PRN to continue."
+      },
+      edit: {
+        title: "Your details",
+        intro: "",
+        primary: "Done",
+        secondary: "Cancel",
+        missing: "Enter your name and PRN."
+      },
       submit: {
         title: "Submit to college",
         intro: "Your grades are sent to the college with your name and PRN.",
@@ -8431,6 +8418,7 @@
       overlay.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
       setBackgroundInert(true);
+      document.getElementById("report-overlay").inert = true;
       const empty = [nameInput, prnInput].find(input => !input.value);
       (empty || document.getElementById("student-popup-primary")).focus();
     }
@@ -8441,6 +8429,7 @@
       overlay.hidden = true;
       overlay.setAttribute("aria-hidden", "true");
       studentPopupMode = null;
+      document.getElementById("report-overlay").inert = false;
       if (!document.getElementById("report-overlay").classList.contains("open")) {
         document.body.style.overflow = "";
         setBackgroundInert(false);
@@ -8472,9 +8461,10 @@
       }
 
       setStudentDetails(name, prn);
-      closeStudentPopup({ restoreFocus: mode !== "start" });
+      closeStudentPopup({ restoreFocus: mode !== "start" && mode !== "marksheet" });
       if (mode === "save") saveCurrentStudent();
       else if (mode === "submit") submitToCollege();
+      else if (mode === "marksheet") requestGradeReport();
     }
 
     ["popup-student-name", "popup-prn"].forEach(id => {
@@ -8496,6 +8486,7 @@
       });
     });
     document.getElementById("student-popup-primary").addEventListener("click", confirmStudentPopup);
+    document.getElementById("student-chip").addEventListener("click", () => openStudentPopup("edit"));
     document.getElementById("student-popup-secondary").addEventListener("click", () => closeStudentPopup());
     document.getElementById("student-popup").addEventListener("click", event => {
       if (event.target.id === "student-popup") closeStudentPopup();
