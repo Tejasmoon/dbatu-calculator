@@ -2664,6 +2664,41 @@
       background: var(--danger);
       color: #fff;
     }
+
+    /* Direct second year: whole website background switches to a blue theme. */
+    body {
+      transition: background-color .35s ease;
+    }
+
+    body.direct-second-year {
+      --bg: #dbeafe;
+      background: var(--bg);
+    }
+
+    /* Direct second year badge inside the "Overall up to Semester N" box. */
+    .metric-group-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+    }
+
+    .metric-entry-badge {
+      padding: 3px 9px;
+      font-size: 10.5px;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+
+    .metric-entry-badge::before {
+      width: 6px;
+      height: 6px;
+    }
+
+    @media (max-width: 700px) {
+      .metric-entry-badge { padding: 2px 7px; font-size: 9px; }
+    }
   </style>
 </head>
 <body>
@@ -3423,7 +3458,10 @@
           </div>
 
           <div class="metric-group">
-            <div class="metric-group-title">Overall up to Semester ${semester.id}</div>
+            <div class="metric-group-title metric-group-title-row">
+              <span>Overall up to Semester ${semester.id}</span>
+              <span class="entry-badge metric-entry-badge" id="metric-direct-badge" hidden>Direct Second Year</span>
+            </div>
             <div class="metric-grid">
               <div class="metric">
                 <div class="metric-label">Credits</div>
@@ -3673,7 +3711,13 @@
       const cumulative = cumulativeState(schemeKey, semester.id);
 
       // Website-only indicator; the PDF/JPG report never mentions it.
-      setBadgeVisible(isDirectSecondYear(schemeKey));
+      const directSecondYear = isDirectSecondYear(schemeKey);
+      setBadgeVisible(directSecondYear);
+      // Direct second year: switch the whole website background to the blue theme.
+      document.body.classList.toggle("direct-second-year", directSecondYear);
+      // Same badge in the "Overall up to Semester N" box (Semester 3 onward, where CGPA starts).
+      const metricBadge = document.getElementById("metric-direct-badge");
+      if (metricBadge) metricBadge.hidden = !(directSecondYear && semester.id >= 3);
       refreshSubmitState(); // a changed grade makes "Submit to College" available again
 
       setAnimatedText("summary-sem-credits", result.credits);
