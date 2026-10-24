@@ -9179,5 +9179,28 @@ $('report-jpg').addEventListener('click',()=>downloadSemester(STATE.reportSem,'j
 window.GradePortal={root:PROOT,rowsFor:sid=>rowsFor(sid),drawSheet:(sid,s)=>drawSheet(sid,s),semesterExamination:sid=>semesterExamination(sid),liveRecord:sid=>liveRecord(sid),storedRecord:sid=>recordsStatus(sid),setStudent:prn=>{STATE.prn=prn}};
 })();
 </script>
+<script>
+/* Clear the Name / PRN boxes whenever they are clicked or tapped into.
+   Runs on pointerdown (before focus), so the box is already empty when the
+   existing focus handlers run. A click inside a box you are already typing in
+   does not clear it, so you can still move the cursor while editing. */
+(function () {
+  var CLEAR_ON_CLICK = ["prn-input", "popup-student-name", "popup-prn"];
+  CLEAR_ON_CLICK.forEach(function (id) {
+    // The PRN lookup box sits inside the portal's shadow root; the popup boxes are in the page.
+    var host = document.getElementById("portal-host");
+    var root = host && host.shadowRoot;
+    var input = document.getElementById(id) || (root && root.getElementById(id));
+    if (!input) return;
+    var scope = input.getRootNode();
+    input.addEventListener("pointerdown", function () {
+      if (scope.activeElement === input || input.value === "") return;
+      input.value = "";
+      // Let the page react as if the user erased it (closes suggestions, resets validation).
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  });
+})();
+</script>
 </body>
 </html>
