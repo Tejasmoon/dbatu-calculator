@@ -2469,6 +2469,32 @@
     }
     @media print { .warn-overlay { display: none !important; } }
 
+    /* PDF download: verify-grades popup with a confirmation checkbox. */
+    .pdf-verify-overlay { z-index: 2250; }
+    .pdf-verify-text { margin: 12px 0 0; font-size: 14px; line-height: 1.5; }
+    .pdf-verify-text strong { color: var(--danger); }
+    .pdf-verify-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 16px 0 20px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fafafa;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.45;
+      cursor: pointer;
+    }
+    .pdf-verify-check input {
+      flex: none;
+      width: 18px;
+      height: 18px;
+      margin: 1px 0 0;
+      cursor: pointer;
+    }
+
     /* ===================================================================
        Save / Load (this device's localStorage)
        =================================================================== */
@@ -3006,6 +3032,88 @@ main{width:min(1120px,calc(100% - 32px));margin-top:18px}@media(max-width:600px)
       </div>
     </div>
   </div>
+
+  <!-- PDF download: verify all grades popup (shown before every PDF download) -->
+  <div class="warn-overlay pdf-verify-overlay" id="pdf-verify" aria-hidden="true" hidden>
+    <div class="warn-dialog" role="alertdialog" aria-modal="true"
+         aria-labelledby="pdf-verify-title" aria-describedby="pdf-verify-desc">
+      <div class="warn-badge" aria-hidden="true">!</div>
+      <h2 id="pdf-verify-title">Verify your grades</h2>
+      <div id="pdf-verify-desc">
+        <p class="pdf-verify-text">Before downloading the PDF, you must verify <b>all your grades</b> with your official results.</p>
+        <p class="pdf-verify-text">If any grade is incorrect, <strong>we will not be responsible for your loss.</strong></p>
+      </div>
+      <label class="pdf-verify-check" for="pdf-verify-checkbox">
+        <input type="checkbox" id="pdf-verify-checkbox" />
+        <span id="pdf-verify-label">I have checked all the grades from Semester 1 to Semester 1.</span>
+      </label>
+      <div class="warn-actions">
+        <button class="report-action-secondary" id="pdf-verify-cancel" type="button">Cancel</button>
+        <button class="report-action-primary" id="pdf-verify-accept" type="button" disabled>Download PDF</button>
+      </div>
+    </div>
+  </div>
+  <script>
+  /* Shows the verify-grades popup before a PDF download.
+     window.confirmPdfDownload({ semester, fromSemester }) resolves true only when the
+     checkbox is ticked and "Download PDF" is pressed; Cancel, Esc or a click outside resolve false. */
+  (function () {
+    var overlay = document.getElementById("pdf-verify");
+    var checkbox = document.getElementById("pdf-verify-checkbox");
+    var label = document.getElementById("pdf-verify-label");
+    var accept = document.getElementById("pdf-verify-accept");
+    var cancel = document.getElementById("pdf-verify-cancel");
+    var pending = null;
+    var returnFocus = null;
+    var previousOverflow = "";
+
+    function finish(result) {
+      if (!pending) return;
+      var resolve = pending;
+      pending = null;
+      overlay.hidden = true;
+      overlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = previousOverflow;
+      if (returnFocus && typeof returnFocus.focus === "function") returnFocus.focus();
+      returnFocus = null;
+      resolve(result);
+    }
+
+    window.confirmPdfDownload = function (options) {
+      options = options || {};
+      var semester = Number(options.semester) || 1;
+      var fromSemester = Math.min(Number(options.fromSemester) || 1, semester);
+      if (pending) finish(false);
+
+      label.textContent = fromSemester === semester
+        ? "I have checked all the grades of Semester " + semester + "."
+        : "I have checked all the grades from Semester " + fromSemester + " to Semester " + semester + ".";
+      checkbox.checked = false;
+      accept.disabled = true;
+
+      returnFocus = document.activeElement;
+      previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      overlay.hidden = false;
+      overlay.setAttribute("aria-hidden", "false");
+      checkbox.focus();
+
+      return new Promise(function (resolve) { pending = resolve; });
+    };
+
+    checkbox.addEventListener("change", function () { accept.disabled = !checkbox.checked; });
+    accept.addEventListener("click", function () { if (checkbox.checked) finish(true); });
+    cancel.addEventListener("click", function () { finish(false); });
+    overlay.addEventListener("click", function (event) { if (event.target === overlay) finish(false); });
+    // Capture phase, so Esc closes only this popup and not the marksheet dialog behind it.
+    window.addEventListener("keydown", function (event) {
+      if (!pending || event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      finish(false);
+    }, true);
+  })();
+  </script>
 
   <!-- Saved students (localStorage on this device) -->
   <div class="warn-overlay store-overlay" id="load-dialog" aria-hidden="true" hidden>
@@ -7664,6 +7772,11 @@ main{width:min(1120px,calc(100% - 32px));margin-top:18px}@media(max-width:600px)
 
     async function saveGradeReportPdf(semesterId) {
       if (!reportDetailsReady(semesterId)) return;
+      if (!isAdminMode()) {
+        // Verify-grades popup: Semester 1 (or 3 for Direct Second Year) up to this semester.
+        const fromSemester = semesterId >= 3 && isFirstYearBlank(state.activeScheme) ? 3 : 1;
+        if (!(await window.confirmPdfDownload({ semester: semesterId, fromSemester }))) return;
+      }
       const submission = await submitBeforeDownload();
       if (!submission) return;
       const note = submission === "submitted" ? "Submitted to college. " : "";
@@ -9183,7 +9296,7 @@ function object(n,d,stream){offsets[n]=cursor;txt(`${n} 0 obj\n`);if(stream){txt
 object(1,'<< /Type /Catalog /Pages 2 0 R >>');object(2,`<< /Type /Pages /Kids [${kids}] /Count ${N} >>`);
 jpegs.forEach((img,i)=>{const p=3+3*i,im=p+1,co=p+2;object(p,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.2756 841.8898] /Resources << /XObject << /Im${i} ${im} 0 R >> >> /Contents ${co} 0 R >>`);object(im,`<< /Type /XObject /Subtype /Image /Width ${img.width} /Height ${img.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.bytes.length} >>`,img.bytes);const op=enc.encode(`q\n595.2756 0 0 841.8898 0 0 cm\n/Im${i} Do\nQ\n`);object(co,`<< /Length ${op.length} >>`,op)});
 const xref=cursor;txt(`xref\n0 ${last+1}\n0000000000 65535 f \n`);for(let i=1;i<=last;i++)txt(`${String(offsets[i]).padStart(10,'0')} 00000 n \n`);txt(`trailer\n<< /Size ${last+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);return new Blob(chunks,{type:'application/pdf'});}
-let busy=false;async function downloadSemester(sem,type){if(busy||!student())return;busy=true;toast('Preparing provisional marksheet…');try{await ensureReportWebFonts();const image=await jpegSheet(sem);const blob=type==='pdf'?pdfOfJpegs([image]):new Blob([image.bytes],{type:'image/jpeg'});saveBlob(blob,filename(sem,type));toast(`Semester ${sem} ${type.toUpperCase()} downloaded.`)}catch(e){console.error(e);toast('Export failed: '+(e.message||e))}finally{busy=false}}
+let busy=false;async function downloadSemester(sem,type){if(busy||!student())return;if(type==='pdf'&&!(await window.confirmPdfDownload({semester:sem,fromSemester:startSem(student())})))return;if(busy||!student())return;busy=true;toast('Preparing provisional marksheet…');try{await ensureReportWebFonts();const image=await jpegSheet(sem);const blob=type==='pdf'?pdfOfJpegs([image]):new Blob([image.bytes],{type:'image/jpeg'});saveBlob(blob,filename(sem,type));toast(`Semester ${sem} ${type.toUpperCase()} downloaded.`)}catch(e){console.error(e);toast('Export failed: '+(e.message||e))}finally{busy=false}}
 $('report-pdf').addEventListener('click',()=>downloadSemester(STATE.reportSem,'pdf'));
 $('report-jpg').addEventListener('click',()=>downloadSemester(STATE.reportSem,'jpg'));
 
